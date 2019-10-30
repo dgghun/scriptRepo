@@ -28,6 +28,7 @@ GITBIN="/source/dbc/bin/"               #git server script source files (bare)
 GITBINTMP="/source/dbc/tmp/bin/"        #git server script source files (staging)
 
 GENERRS=1                               #"General Errors" error code
+CURRDIR=`pwd`                           #current directory
 
 #*******************************************************************************
 # FUNCTIONS ********************************************************************
@@ -97,15 +98,53 @@ function doGitCommand(){
   esac
 }
 
+#** Exits the script and changes back to starting directory
+#*
+function exitScript(){
+  cd "${CURRDIR}"
+  exit 1
+}
+
+#** showHelp()
+#   Prints this help screen :)
+#*
+function showHelp(){
+  echo ""
+  boldTxt " HELP SCREEN $(grnTxt "(updGit.sh)")"
+  boldTxt ' sh updGit.sh [PATH] [OPTION]...'
+  blueTxt ' Updates the git servers repo by copying over source files from production.'
+  blueTxt ' Will execute passed in git commands on local repo.'
+  blueTxt ' ${1} = Path to local repo (ie /dbc/src). MUST BE PASSED IN 1ST and '
+  blueTxt '        ONLY needed if you are not in a repo and want to execute git commands.'
+  blueTxt ' ${n} = Execute Git commands: -pull -fetch -push'
+  echo ""
+  boldTxt " Examples:"
+  echo    '   sh updGit.sh                '$(blueTxt "#update git server")
+  echo    '   sh updGit.sh -pull          '$(blueTxt "#update git server and do command in current dir repo")
+  echo    '   sh updGit.sh /dbc/src -pull '$(blueTxt "#update git server and do command in passed in dir repo")
+  echo ""
+  
+}
 #*******************************************************************************
 # SCRIPT START *****************************************************************
 #*******************************************************************************
+
+#help needed?
+if [ "${1}" == "-help" ];then
+  showHelp
+  exit 0
+fi
+
+#check for passed in repo directory
+if [[ -d "${1}" ]];then
+  cd "${1}"
+fi
 
 #get production user name
 sshUser=$(setDevToProdUser "$(whoami)")
 if [ "${sshUser}" == "" ]; then
   redTxt "User $(whoami) is not setup to use this script."
-  exit 1
+  exitScript
 fi
 
 #ssh into production and copy files to git server 
@@ -114,7 +153,7 @@ copyProdToGit "${sshUser}" &> ${LOG}
 err=$?
 if [ ${err} -gt ${GENERRS} ];then 
   echo "Error ${err} - SSH connection or remote command failed. Check ${LOG} for more info."  
-  exit 1
+  exitScript
 fi
 grnTxt "Git server updated OK!"
 
@@ -126,6 +165,7 @@ if [ $# -gt 0 ]; then
 fi
  
 grnTxt 'Bye!'
+cd "${CURRDIR}"
  
 #*******************************************************************************
 # updGit.sh END ****************************************************************
