@@ -114,7 +114,7 @@ function showHelp(){
   boldTxt ' sh updGit.sh [PATH] [OPTION]...'
   blueTxt ' Updates the git servers repo by copying over source files from production.'
   blueTxt ' Will execute passed in git commands on local repo.'
-  blueTxt ' ${1} = Path to local repo (ie /dbc/src). MUST BE PASSED IN 1ST and '
+  blueTxt ' ${1} = Optional. Path to local repo (ie /dbc/src). MUST BE PASSED IN 1ST and '
   blueTxt '        ONLY needed if you are not in a repo and want to execute git commands.'
   blueTxt ' ${n} = Execute Git commands: -pull -fetch -push'
   echo ""
