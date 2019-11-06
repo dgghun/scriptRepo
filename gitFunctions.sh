@@ -166,9 +166,9 @@ function gitchkoutDevelop(){
 
 
 
-#@
-#@
-#@
+#@  getProductionUser
+#@  Shows the mapped test system to production server user name.
+#@  TODO: will be able to edit user names.
 #@
 function getProductionUser(){
   local cnt=0
