@@ -19,6 +19,9 @@ function gitFunctionsHelp(){
       if [ ${cnt} = 1 ];then 
         echo ""
         boldTxt " FUNCTIONS HELP SCREEN $(grnTxt "(gitFunctions.sh)")"
+        printf " To show common Git commands: $(boldTxt 'git help')"
+        printf " To list all Git commands: $(boldTxt '   git help -a') "
+        echo ""
         boldTxt " ${line}"
       elif [[ "${line}" == *"()"* ]];then
         boldTxt " ${line}"
@@ -196,7 +199,6 @@ function getProductionUser(){
 #@  gitupdGit -pull              #updates GS & does 'git pull' on current repo/dir
 #@  gitupdGit /dbc/src -pull     #updates GS, & does 'git pull' on past in repo/dir
 #@
-
 function gitupdGit(){
   #local variables
   local curdir=`pwd`
@@ -285,13 +287,14 @@ UPDGIT
   grnTxt 'Bye!'
 } 
 
-#@
-#@
-#@
+#@  lockfile()
+#@  Checks out a file on the production(ie copies it to your work directory).
+#@  ${1} = File name (eg COPPWORK or someScript.sh)
 #@
 function lockfile(){
   #local variables
   local inFile="${1}"
+  local lockScript="sh ~/SWTMP"
   local PROGS="{DGG,DAV,GLE,AJS,BG}"   #programmer initials
   local LOCK=0
   local UNLOCK=1
@@ -316,7 +319,9 @@ function lockfile(){
   
   #lock file
   boldTxt "Enter production password:"
-  ssh -t ${sshUser}@${PROIP} "source .bash_profile .bashrc; SW ${inFile}" #| tee ${tmpFile}
+  ssh -tq ${sshUser}@${PROIP} "source .bash_profile .bashrc; "${lockScript} ${inFile}""
+  
+  
   
 }
 
@@ -332,6 +337,13 @@ function cdsrc(){
 #@
 function cdbin(){
   cd /dbc/bin; git status;
+}
+
+#@  cdwork()
+#@  Changes directory to dbc work & gets git status
+#@
+function cdwork(){
+  cd /dbc/work; git status;
 }
 
 #@  boldTxt()
