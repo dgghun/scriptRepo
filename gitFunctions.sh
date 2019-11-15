@@ -32,7 +32,7 @@ function gitFunctionsHelp(){
     awk '{print}' | less -R
 }
 
-#@  gitshow()
+#@  gitshow() [HASH] [PATH]
 #@  Prints the difference between the current and last commit.
 #@  ${1} = Git commit hash (ie 44d3b7d)
 #@  ${2} = Optional. Path to repo (ie /dbc/src)
@@ -52,7 +52,7 @@ function gitshow(){
   fi
 }
 
-#@  gitstat()
+#@  gitstat() [PATH]
 #@  Prints the current repos status
 #@  ${1} = Optional. Path to repo (ie /dbc/src)
 #@
@@ -71,7 +71,7 @@ function gitstat(){
    fi
 }
 
-#@  gitlog()
+#@  gitlog() [PATH]
 #@  Prints the current repos git commit log
 #@  ${1} = Optional. Path to repo (ie /dbc/src)
 #@
@@ -90,7 +90,7 @@ function gitlog(){
   fi 
 }
 
-#@  gitlogtime()
+#@  gitlogtime() [PATH]
 #@  Prints the current repos git commit log
 #@  ${1} = Optional. Path to repo (ie /dbc/src)
 #@
@@ -109,7 +109,7 @@ function gitlogtime(){
   fi
 }
 
-#@  gitcommitall()
+#@  gitcommitall() [MESSAGE] [PATH]
 #@  Adds and commits all changes/files to repo
 #@  ${1} = 50 char commit message string
 #@  ${2} = Optional. Path to repo (ie /dbc/src)
@@ -129,7 +129,7 @@ function gitcommitall(){
   fi
 }
 
-#@  gitchkmaster()
+#@  gitchkmaster() [PATH]
 #@  Checks out the master branch
 #@  ${1} = Optional. Directory path to git repo (ie /dbc/src).
 #@
@@ -148,7 +148,7 @@ function gitchkoutMaster(){
   fi
 }
 
-#@  gitchkdevelop()
+#@  gitchkdevelop() [PATH]
 #@  Checks out the development branch. 
 #@  ${1} = Optional. Directory path to git repo (ie /dbc/src).
 #@
@@ -167,11 +167,8 @@ function gitchkoutDevelop(){
   fi
 }
 
-
-
-#@  getProductionUser
-#@  Shows the mapped test system to production server user name.
-#@  TODO: will be able to edit user names.
+#@  getProductionUser() [USER]
+#@  Shows the mapped test-to-production server user name.
 #@
 function getProductionUser(){
   local cnt=0
@@ -188,12 +185,12 @@ function getProductionUser(){
   echo "${userFound}"
 }
 
-#@  gitupdGit() 
+#@  gitupdGit() [PATH] [GIT COMMAND]
 #@  Updates the git server's repo by copying over source files from production.
 #@  Will also execute passed in git commands on local repo.
 #@  ${1} = Optional. Path to local repo (ie /dbc/src). MUST BE PASSED IN 1ST and 
 #@  '      ONLY needed if you are not in a repo and want to execute git commands.
-#@  ${n} = Execute Git commands: -pull -fetch -push'
+#@  ${1 or 2} = Execute Git commands: -pull -fetch -push'
 #@  Examples: 
 #@  gitupdGit                    #updates git server (GS)
 #@  gitupdGit -pull              #updates GS & does 'git pull' on current repo/dir
@@ -240,7 +237,7 @@ UPDGIT
   local sshUser=""
   sshUser=$(getProductionUser "$curUser")
   if [ "${sshUser}" == "" ]; then
-    redTxt "User ${curUser} is not setup to use this function."
+    redTxt "User ${curUser} is not setup to use this function. (gitFunctions)"
     cd "${curdir}"
     return
   fi
@@ -287,20 +284,18 @@ UPDGIT
   grnTxt 'Bye!'
 } 
 
-#@  lockfile()
-#@  Checks out a file on the production(ie copies it to your work directory).
-#@  ${1} = File name (eg COPPWORK or someScript.sh)
+#@  gitlockFile() [FILENAME] [OPTION]
+#@  Checks out a file on the production server from your test system
+#@  (ie copies it to the production server work directory /dbc/work)
+#@  ${1} = File name with no extension (eg COPPWORK or someScript)
+#@  ${2} = Option.
+#@  -u = unlocks file (ie removes from /dbc/work)
 #@
-function lockfile(){
+function gitlockFile(){
   #local variables
   local inFile="${1}"
-  local lockScript="sh ~/SWTMP"
-  local PROGS="{DGG,DAV,GLE,AJS,BG}"   #programmer initials
-  local LOCK=0
-  local UNLOCK=1
-  local lockMode
-  local tmpFile="fileLock.tmp"
-  local files=()
+  local option="${2}" #TODO option to unlock file
+  local lockScript="sh ~/GITSW.sh"              #production server script
   local PROIP="${XPROIP}"                       #production server IP (.bashrc)
   
   #check input
@@ -313,16 +308,51 @@ function lockfile(){
   local sshUser=""
   sshUser=$(getProductionUser "$(whoami)")
   if [ "${sshUser}" == "" ]; then
-    redTxt "User ${curUser} is not setup to use this function."
+    redTxt "User ${curUser} is not setup to use this function. (gitFunctions)"
     return
   fi
   
   #lock file
   boldTxt "Enter production password:"
   ssh -tq ${sshUser}@${PROIP} "source .bash_profile .bashrc; "${lockScript} ${inFile}""
+}
+
+#@  gitcw() [FILENAME] [OPTION]
+#@  Compiles a file that is checked out on the production server from your test  
+#@  system.  
+#@  ${1} = File name (eg COPPWORK)
+#@  ${2} = Option.
+#@  -p = put compiled file into production (ie similar to PP script)
+#@
+function gitcw(){
+  #local variables
+  local inFile="${1}"
+  local option="${2}" #TODO add -p option to function
+  local dataBase=PMS
+  local compileScript="sh ~/GITCW.sh"           #production server script
+  local PROIP="${XPROIP}"                       #production server IP (.bashrc)
   
+  #check input
+  if [ "${inFile}" == "" ]; then
+    redTxt "No file entered."
+    return
+  fi
   
+  #get production user name
+  local sshUser=""
+  sshUser=$(getProductionUser "$(whoami)")
+  if [ "${sshUser}" == "" ]; then
+    redTxt "User ${curUser} is not setup to use this function. (gitFunctions)"
+    return
+  fi
   
+  #compile file
+  boldTxt "Enter production password:"
+  ssh -tq ${sshUser}@${PROIP} "
+    source .bash_profile .bashrc /dbc/bin/functions.sh;
+    ${dataBase} &> /dev/null;
+    "${compileScript} ${inFile}";
+  "
 }
 
 #@  cdsrc()
@@ -346,7 +376,7 @@ function cdwork(){
   cd /dbc/work; git status;
 }
 
-#@  boldTxt()
+#@  boldTxt() [STRING]
 #@  Prints the string as bold font
 #@  ${1} = Some string
 #@
@@ -354,7 +384,7 @@ function boldTxt(){
   tput bold; echo "${1}"; tput sgr0;
 }
 
-#@  grnTxt()
+#@  grnTxt() [STRING]
 #@  Prints the string as green font
 #@  ${1} = Some string
 #@ 
@@ -363,7 +393,7 @@ function grnTxt(){
   tput setaf ${GRN}; echo "${1}"; tput sgr0;
 }
 
-#@  blueTxt()
+#@  blueTxt() [STRING]
 #@  Prints the string as blue font
 #@  ${1} = Some string
 #@ 
@@ -372,7 +402,7 @@ function blueTxt(){
   tput setaf ${BLUE}; echo "${1}"; tput sgr0;
 }
 
-#@  redTxt()
+#@  redTxt() [STRING]
 #@  Prints the string as red font
 #@  ${1} = Some string
 #@ 
