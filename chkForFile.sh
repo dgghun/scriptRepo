@@ -6,6 +6,8 @@ HR=0
 MIN=0
 SEC=0
 
+sh ~/waitForScript.sh chkForFile.sh
+
 if [ "$1" = "" ];then
   printf "No file entered to monitor!\n"
 else
