@@ -214,6 +214,15 @@ function gitupdGit(){
   #   ${1} = Production user name
   #*
   function copyProdToGit(){
+    ssh -T ${GITSRV}<<SETUPGIT
+cd ${GITSRCTMP}
+git checkout master
+git pull
+cd ${GITBINTMP}
+git checkout master
+git pull
+SETUPGIT
+  
     ssh -T ${1}@${PROIP}<<COPYSRC
 rsync -tv ${PROSRC}*.{TXT,VRB,PRG,IO,DEF,INC,PGM,VAR} ${GITSRV}:${GITSRCTMP}
 rsync -tv ${PROBIN}*.sh ${GITSRV}:${GITBINTMP}
@@ -284,17 +293,17 @@ UPDGIT
   grnTxt 'Bye!'
 } 
 
-#@  gitlockFile() [FILENAME] [OPTION]
+#@  gitfilelock() [FILENAME] [OPTION]
 #@  Checks out a file on the production server from your test system
 #@  (ie copies it to the production server work directory /dbc/work)
 #@  ${1} = File name with no extension (eg COPPWORK or someScript)
 #@  ${2} = Option.
 #@  -u = unlocks file (ie removes from /dbc/work)
 #@
-function gitlockFile(){
+function gitfilelock(){
   #local variables
   local inFile="${1}"
-  local option="${2}" #TODO option to unlock file
+  local option="${2}"                           #option 
   local lockScript="sh ~/GITSW.sh"              #production server script
   local PROIP="${XPROIP}"                       #production server IP (.bashrc)
   
@@ -314,7 +323,7 @@ function gitlockFile(){
   
   #lock file
   boldTxt "Enter production password:"
-  ssh -tq ${sshUser}@${PROIP} "source .bash_profile .bashrc; "${lockScript} ${inFile}""
+  ssh -tq ${sshUser}@${PROIP} "source .bash_profile .bashrc; ${lockScript} ${inFile} ${option}"
 }
 
 #@  gitcw() [FILENAME] [OPTION]
@@ -323,11 +332,17 @@ function gitlockFile(){
 #@  ${1} = File name (eg COPPWORK)
 #@  ${2} = Option.
 #@  -p = put compiled file into production (ie similar to PP script)
+#@  -u = unlocks file (ie removes from /dbc/work)
+#@  
+#@  Examples: 
+#@  gitcw SOMEFILE -p
+#@  gitcw SOMEFILE -pu
+#@  gitcw SOMEFILE -up
 #@
 function gitcw(){
   #local variables
   local inFile="${1}"
-  local option="${2}" #TODO add -p option to function
+  local option="${2}"                           #options
   local dataBase=PMS
   local compileScript="sh ~/GITCW.sh"           #production server script
   local PROIP="${XPROIP}"                       #production server IP (.bashrc)
@@ -351,7 +366,7 @@ function gitcw(){
   ssh -tq ${sshUser}@${PROIP} "
     source .bash_profile .bashrc /dbc/bin/functions.sh;
     ${dataBase} &> /dev/null;
-    "${compileScript} ${inFile}";
+    ${compileScript} ${inFile} ${option};
   "
 }
 
