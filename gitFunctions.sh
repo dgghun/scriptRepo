@@ -379,6 +379,48 @@ function gitcw(){
   "
 }
 
+#@  gitcopyToProd() [FILE] [PATH]
+#@  SSH into production and copy over file/s. Useful if you need to test some
+#@  stuff on production. Type 'exit' to logout of production.
+#@  ${1} = file or path to file
+#@  ${2} = Optional. Path on production server. Default is /dbc/work/
+#@
+function gitcopyToProd(){
+  #local variables
+  local inFile="${1}"
+  local PROIP="${XPROIP}"                                     #production server IP (.bashrc)
+  local thisUser=`whoami`
+  local MYIP="`whoami`@`hostname -I | awk '{$1=$1;print;}'`"  #me and my ip with no trailing white spaces
+  local proDest=/dbc/work/
+  
+  #check input
+  if [ "${inFile}" == "" ]; then
+    redTxt "No file entered."
+    return
+  fi
+  
+  
+  #get production user name
+  local sshUser=""
+  sshUser=$(getProductionUser "$(whoami)")
+  if [ "${sshUser}" == "" ]; then
+    redTxt "User ${curUser} is not setup to use this function. (gitFunctions)"
+    return
+  fi
+  
+  #Check user name path
+  if [ $# -eq 2 ]; then
+    proDest=`echo ${2} | sed s/${thisUser}/${sshUser}/g`  #replace test with production name
+  fi
+
+  #ssh into production and copy file over
+  ssh -tq ${sshUser}@${PROIP} "
+    source .bash_profile .bashrc;
+    scp ${MYIP}:${inFile} ${proDest};
+    bash;
+  "
+}
+
 #@  cdsrc()
 #@  Changes directory to dbc source & gets git status
 #@
