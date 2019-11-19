@@ -200,7 +200,6 @@ function gitupdGit(){
   #local variables
   local curdir=`pwd`
   local curUser="$(whoami)"
-  local LOG="./gitupdGit.log"                      #general log for this function
   local GITSRV="${XGITSRV}"                     #git server user and IP (.bashrc)
   local PROIP="${XPROIP}"                       #production server IP (.bashrc)
   local PROSRC="/dbc/src/"                      #production dbc source files
@@ -214,28 +213,37 @@ function gitupdGit(){
   #   ${1} = Production user name
   #*
   function copyProdToGit(){
-    ssh -T ${GITSRV}<<SETUPGIT
+    blueTxt "Pulling in changes from master to temp repo on git server..."
+    ssh -Tq ${GITSRV}<<SETUPGIT
+echo "ssh ${GITSRV} (Git Server)"
 cd ${GITSRCTMP}
-git checkout master
+echo 'REPO: ${GITSRCTMP} COMMANDS: git pull'
 git pull
 cd ${GITBINTMP}
-git checkout master
+echo 'REPO: ${GITBINTMP} COMMANDS: git pull'
 git pull
 SETUPGIT
   
-    ssh -T ${1}@${PROIP}<<COPYSRC
-rsync -tv ${PROSRC}*.{TXT,VRB,PRG,IO,DEF,INC,PGM,VAR} ${GITSRV}:${GITSRCTMP}
-rsync -tv ${PROBIN}*.sh ${GITSRV}:${GITBINTMP}
+    blueTxt "Copying source files from production to git server..."
+    boldTxt "Enter your production server password:"
+    ssh -Tq ${1}@${PROIP}<<COPYSRC
+echo "ssh ${1}@${PROIP} (Production Server)"
+echo "${PROSRC} ---> ${GITSRV}:${GITSRCTMP}"
+rsync -t ${PROSRC}*.{TXT,VRB,PRG,IO,DEF,INC,PGM,VAR} ${GITSRV}:${GITSRCTMP}
+echo "${PROBIN} ---> ${GITSRV}:${GITBINTMP}"
+rsync -t ${PROBIN}*.sh ${GITSRV}:${GITBINTMP}
 COPYSRC
 
-    ssh -T ${GITSRV}<<UPDGIT
+    blueTxt "Committing changes to temp repo and pushing to master repo on git server..."
+    ssh -Tq ${GITSRV}<<UPDGIT
+echo "ssh ${GITSRV} (Git Server)"
 cd ${GITSRCTMP}
-echo "${GITSRCTMP}"
+echo 'REPO: ${GITSRCTMP} COMMANDS: git add && git commit && git push'
 git add .
 git commit -m "pro-to-git $(date +"%m-%d-%y %I:%M:%S %p")"
 git push
 cd ${GITBINTMP}
-echo "${GITBINTMP}"
+echo "REPO: ${GITBINTMP} COMMANDS: git add && git commit && git push"
 git add .
 git commit -m "pro-to-git $(date +"%m-%d-%y %I:%M:%S %p")"
 git push
@@ -252,16 +260,15 @@ UPDGIT
   fi
 
   #ssh into production and copy files to git server 
-  boldTxt "Updating Git Server. Enter your production server password:"
-  copyProdToGit "${sshUser}" &> ${LOG}
+  copyProdToGit "${sshUser}"      #update git server
   local err=$?                    #save error codes if any
   unset -f copyProdToGit          #destroy local function after use
   if [ ${err} -gt ${GENERRS} ];then 
-    echo "Error ${err} - SSH connection or remote command failed. Check ${LOG} for more info."  
+    echo "Error ${err} - SSH connection or remote command failed."  
     cd "${curdir}"
     return
   fi
-  grnTxt "Git server updated OK! (check ${LOG} for more info)"
+  grnTxt "Git server updated OK!"
   
   #check for passed in repo directory
   if [[ -d "${1}" ]];then
@@ -326,26 +333,28 @@ function gitfilelock(){
   ssh -tq ${sshUser}@${PROIP} "source .bash_profile .bashrc; ${lockScript} ${inFile} ${option}"
 }
 
-#@  gitcw() [FILENAME] [OPTION]
+#@  gitcw() [FILENAME] [OPTIONS]
 #@  Compiles a file that is checked out on the production server from your test  
 #@  system.  
 #@  ${1} = File name (eg COPPWORK)
-#@  ${2} = Option.
+#@  ${2} = Options. Order is irrelevant.
+#@  -c = copy local file to production (/dbc/work) before compiling
 #@  -p = put compiled file into production (ie similar to PP script)
 #@  -u = unlocks file (ie removes from /dbc/work)
 #@  
 #@  Examples: 
 #@  gitcw SOMEFILE -p
 #@  gitcw SOMEFILE -pu
-#@  gitcw SOMEFILE -up
+#@  gitcw SOMEFILE -ucp
 #@
 function gitcw(){
   #local variables
   local inFile="${1}"
-  local option="${2}"                           #options
+  local options="${2}"                          #options
   local dataBase=PMS
   local compileScript="sh ~/GITCW.sh"           #production server script
   local PROIP="${XPROIP}"                       #production server IP (.bashrc)
+  local MYIP="`whoami`@`hostname -I`"           #me and my IP
   
   #check input
   if [ "${inFile}" == "" ]; then
@@ -366,7 +375,7 @@ function gitcw(){
   ssh -tq ${sshUser}@${PROIP} "
     source .bash_profile .bashrc /dbc/bin/functions.sh;
     ${dataBase} &> /dev/null;
-    ${compileScript} ${inFile} ${option};
+    ${compileScript} ${MYIP} ${inFile} ${options};
   "
 }
 
