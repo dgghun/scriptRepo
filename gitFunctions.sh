@@ -185,19 +185,21 @@ function getProductionUser(){
   echo "${userFound}"
 }
 
-#@  gitupdGit() [PATH] [GIT COMMAND]
+#@  gitupdGit() [GIT COMMAND] [PATH] 
 #@  Updates the git server's repo by copying over source files from production.
 #@  Will also execute passed in git commands on local repo.
-#@  ${1} = Optional. Path to local repo (ie /dbc/src). MUST BE PASSED IN 1ST and 
-#@  '      ONLY needed if you are not in a repo and want to execute git commands.
-#@  ${1 or 2} = Execute Git commands: -pull -fetch -push'
+#@  ${1} = Execute Git commands: -pull -fetch -push'
+#@  ${2} = Optional. Path to local repo (ie /dbc/src). 
+#@
 #@  Examples: 
 #@  gitupdGit                    #updates git server (GS)
 #@  gitupdGit -pull              #updates GS & does 'git pull' on current repo/dir
-#@  gitupdGit /dbc/src -pull     #updates GS, & does 'git pull' on past in repo/dir
+#@  gitupdGit -pull /dbc/src     #updates GS, & does 'git pull' on past in repo/dir
 #@
 function gitupdGit(){
   #local variables
+  local gitCmd="${1}"
+  local repoPath="${2}"
   local curdir=`pwd`
   local curUser="$(whoami)"
   local GITSRV="${XGITSRV}"                     #git server user and IP (.bashrc)
@@ -214,7 +216,7 @@ function gitupdGit(){
   #*
   function copyProdToGit(){
     blueTxt "Pulling in changes from master to temp repo on git server..."
-    ssh -Tq ${GITSRV}<<SETUPGIT
+    ssh -Tq ${GITSRV}<<UPDTEMP
 echo "ssh ${GITSRV} (Git Server)"
 cd ${GITSRCTMP}
 echo 'REPO: ${GITSRCTMP} COMMANDS: git pull'
@@ -222,7 +224,7 @@ git pull
 cd ${GITBINTMP}
 echo 'REPO: ${GITBINTMP} COMMANDS: git pull'
 git pull
-SETUPGIT
+UPDTEMP
   
     blueTxt "Copying source files from production to git server..."
     boldTxt "Enter your production server password:"
@@ -259,6 +261,7 @@ UPDGIT
     return
   fi
 
+  #TODO rethink this... probably ssh into prod first, then do all this stuff so we are only entering the password once
   #ssh into production and copy files to git server 
   copyProdToGit "${sshUser}"      #update git server
   local err=$?                    #save error codes if any
@@ -271,29 +274,37 @@ UPDGIT
   grnTxt "Git server updated OK!"
   
   #check for passed in repo directory
-  if [[ -d "${1}" ]];then
-    cd "${1}"
-    blueTxt "${1} - On branch $(git branch | grep \* | awk '{print $2}')"
+  if [[ -d "${repoPath}" ]];then
+    cd "${repoPath}"
+    blueTxt "${repoPath} - On branch $(git branch | grep \* | awk '{print $2}')"
   fi
 
   #execute any passed in git commands
   if [ $# -gt 0 ]; then 
-    for i in $@;do
-      case "${i}" in
-        '-pull')
-            boldTxt "Executing: git pull"
-            git pull
-            ;;
-        '-fetch')
-            boldTxt "Executing: git fetch"
-            git fetch
-            ;;
-        '-push')
-            boldTxt "Executing: git push"
-            git push
-            ;;
-      esac
-    done
+    case "${gitCmd}" in
+      '-pull')
+          boldTxt "Executing: git pull"
+          git pull
+          ;;
+      '-fetch')
+          boldTxt "Executing: git fetch"
+          git fetch
+          ;;
+      '-push')
+          boldTxt "Executing: git push"
+          git push
+          blueTxt "Pulling in changes from master to temp repo on git server..."
+          ssh -Tq ${GITSRV}<<UPDTEMP
+echo "ssh ${GITSRV} (Git Server)"
+cd ${GITSRCTMP}
+echo 'REPO: ${GITSRCTMP} COMMANDS: git pull'
+git pull
+cd ${GITBINTMP}
+echo 'REPO: ${GITBINTMP} COMMANDS: git pull'
+git pull
+UPDTEMP
+          ;;
+    esac
   fi
   
   cd "${curdir}"                                            #back to previous directory
