@@ -133,7 +133,7 @@ function gitcommitall(){
 #@  Checks out the master branch
 #@  ${1} = Optional. Directory path to git repo (ie /dbc/src).
 #@
-function gitchkoutMaster(){
+function gitchkoutmaster(){
   if [ $# -gt 0 ]; then
     local curdir=`pwd`
     cd "$1"
@@ -152,7 +152,7 @@ function gitchkoutMaster(){
 #@  Checks out the development branch. 
 #@  ${1} = Optional. Directory path to git repo (ie /dbc/src).
 #@
-function gitchkoutDevelop(){
+function gitchkoutdevelop(){
   if [ $# -gt 0 ]; then
     local curdir=`pwd`
     cd "$1"
@@ -169,6 +169,7 @@ function gitchkoutDevelop(){
 
 #@  getProductionUser() [USER]
 #@  Shows the mapped test-to-production server user name.
+#@  ${1} = User name
 #@
 function getProductionUser(){
   local cnt=0
@@ -184,132 +185,6 @@ function getProductionUser(){
   done
   echo "${userFound}"
 }
-
-#@  gitupdGit() [GIT COMMAND] [PATH] 
-#@  Updates the git server's repo by copying over source files from production.
-#@  Will also execute passed in git commands on local repo.
-#@  ${1} = Execute Git commands: -pull -fetch -push'
-#@  ${2} = Optional. Path to local repo (ie /dbc/src). 
-#@
-#@  Examples: 
-#@  gitupdGit                    #updates git server (GS)
-#@  gitupdGit -pull              #updates GS & does 'git pull' on current repo/dir
-#@  gitupdGit -pull /dbc/src     #updates GS, & does 'git pull' on past in repo/dir
-#@
-function gitupdGit(){
-  #local variables
-  local gitCmd="${1}"
-  local repoPath="${2}"
-  local curdir=`pwd`
-  local curUser="$(whoami)"
-  local GITSRV="${XGITSRV}"                     #git server user and IP (.bashrc)
-  local PROIP="${XPROIP}"                       #production server IP (.bashrc)
-  local PROSRC="/dbc/src/"                      #production dbc source files
-  local GITSRCTMP="/source/dbc/tmp/src/"        #git server dbc source files (staging)
-  local PROBIN="/dbc/bin/"                      #production script source files
-  local GITBINTMP="/source/dbc/tmp/bin/"        #git server script source files (staging)
-  local GENERRS=1                               #"General Errors" error code
-  
-  #local functions
-  #** Copies production source files to git server & commits changes
-  #   ${1} = Production user name
-  #*
-  function copyProdToGit(){
-    blueTxt "Pulling in changes from master to temp repo on git server..."
-    ssh -Tq ${GITSRV}<<UPDTEMP
-echo "ssh ${GITSRV} (Git Server)"
-cd ${GITSRCTMP}
-echo 'REPO: ${GITSRCTMP} COMMANDS: git pull'
-git pull
-cd ${GITBINTMP}
-echo 'REPO: ${GITBINTMP} COMMANDS: git pull'
-git pull
-UPDTEMP
-  
-    blueTxt "Copying source files from production to git server..."
-    boldTxt "Enter your production server password:"
-    ssh -Tq ${1}@${PROIP}<<COPYSRC
-echo "ssh ${1}@${PROIP} (Production Server)"
-echo "${PROSRC} ---> ${GITSRV}:${GITSRCTMP}"
-rsync -t ${PROSRC}*.{TXT,VRB,PRG,IO,DEF,INC,PGM,VAR} ${GITSRV}:${GITSRCTMP}
-echo "${PROBIN} ---> ${GITSRV}:${GITBINTMP}"
-rsync -t ${PROBIN}*.sh ${GITSRV}:${GITBINTMP}
-COPYSRC
-
-    blueTxt "Committing changes to temp repo and pushing to master repo on git server..."
-    ssh -Tq ${GITSRV}<<UPDGIT
-echo "ssh ${GITSRV} (Git Server)"
-cd ${GITSRCTMP}
-echo 'REPO: ${GITSRCTMP} COMMANDS: git add && git commit && git push'
-git add .
-git commit -m "pro-to-git $(date +"%m-%d-%y %I:%M:%S %p")"
-git push
-cd ${GITBINTMP}
-echo "REPO: ${GITBINTMP} COMMANDS: git add && git commit && git push"
-git add .
-git commit -m "pro-to-git $(date +"%m-%d-%y %I:%M:%S %p")"
-git push
-UPDGIT
-  }
-  
-  #get production user name
-  local sshUser=""
-  sshUser=$(getProductionUser "$curUser")
-  if [ "${sshUser}" == "" ]; then
-    redTxt "User ${curUser} is not setup to use this function. (gitFunctions)"
-    cd "${curdir}"
-    return
-  fi
-
-  #TODO rethink this... probably ssh into prod first, then do all this stuff so we are only entering the password once
-  #ssh into production and copy files to git server 
-  copyProdToGit "${sshUser}"      #update git server
-  local err=$?                    #save error codes if any
-  unset -f copyProdToGit          #destroy local function after use
-  if [ ${err} -gt ${GENERRS} ];then 
-    echo "Error ${err} - SSH connection or remote command failed."  
-    cd "${curdir}"
-    return
-  fi
-  grnTxt "Git server updated OK!"
-  
-  #check for passed in repo directory
-  if [[ -d "${repoPath}" ]];then
-    cd "${repoPath}"
-    blueTxt "${repoPath} - On branch $(git branch | grep \* | awk '{print $2}')"
-  fi
-
-  #execute any passed in git commands
-  if [ $# -gt 0 ]; then 
-    case "${gitCmd}" in
-      '-pull')
-          boldTxt "Executing: git pull"
-          git pull
-          ;;
-      '-fetch')
-          boldTxt "Executing: git fetch"
-          git fetch
-          ;;
-      '-push')
-          boldTxt "Executing: git push"
-          git push
-          blueTxt "Pulling in changes from master to temp repo on git server..."
-          ssh -Tq ${GITSRV}<<UPDTEMP
-echo "ssh ${GITSRV} (Git Server)"
-cd ${GITSRCTMP}
-echo 'REPO: ${GITSRCTMP} COMMANDS: git pull'
-git pull
-cd ${GITBINTMP}
-echo 'REPO: ${GITBINTMP} COMMANDS: git pull'
-git pull
-UPDTEMP
-          ;;
-    esac
-  fi
-  
-  cd "${curdir}"                                            #back to previous directory
-  grnTxt 'Bye!'
-} 
 
 #@  gitfilelock() [FILENAME] [OPTION]
 #@  Checks out a file on the production server from your test system
@@ -432,6 +307,37 @@ function gitcopyToProd(){
   "
 }
 
+#@  gitstartdev() [PATH]
+#@  Executes a "git pull" and creates a new develop branch. If the develop branch exists,
+#@  it is deleted before creating a new one.
+#@  ${1} = Optional path to a repo. Short hand dbc directories are "src" and "bin"
+#@
+#@  Examples: 
+#@  gitstartdev src
+#@  gitstartdev bin
+#@  gitstartdev /some/path/
+#@
+function gitstartdev(){
+  #local variables
+  local curdir=`pwd`
+  local dirToGo="${1}"
+  
+  #check for short hand
+  case "${dirToGo}" in
+    "src")
+      dirToGo="/dbc/src/"
+      ;;
+    "bin")
+      dirToGo="/dbc/bin/"
+      ;;
+  esac
+
+  #if [ $# -gt 0 ];then
+  #  #TODO cd 
+  #fi
+
+}
+
 #@  cdsrc()
 #@  Changes directory to dbc source & gets git status
 #@
@@ -491,3 +397,131 @@ function redTxt(){
 #*******************************************************************************
 # gitFunctions.sh END **********************************************************
 #*******************************************************************************
+
+#old ideas
+
+####@  gitupdGit() [GIT COMMAND] [PATH] 
+####@  Updates the git server's repo by copying over source files from production.
+####@  Will also execute passed in git commands on local repo.
+####@  ${1} = Execute Git commands: -pull -fetch -push'
+####@  ${2} = Optional. Path to local repo (ie /dbc/src). 
+####@
+####@  Examples: 
+####@  gitupdGit                    #updates git server (GS)
+####@  gitupdGit -pull              #updates GS & does 'git pull' on current repo/dir
+####@  gitupdGit -pull /dbc/src     #updates GS, & does 'git pull' on past in repo/dir
+####@
+###function gitupdGit(){
+###  #local variables
+###  local gitCmd="${1}"
+###  local repoPath="${2}"
+###  local curdir=`pwd`
+###  local curUser="$(whoami)"
+###  local GITSRV="${XGITSRV}"                     #git server user and IP (.bashrc)
+###  local PROIP="${XPROIP}"                       #production server IP (.bashrc)
+###  local PROSRC="/dbc/src/"                      #production dbc source files
+###  local GITSRCTMP="/source/dbc/tmp/src/"        #git server dbc source files (staging)
+###  local PROBIN="/dbc/bin/"                      #production script source files
+###  local GITBINTMP="/source/dbc/tmp/bin/"        #git server script source files (staging)
+###  local GENERRS=1                               #"General Errors" error code
+###  
+###  #local functions
+###  #** Copies production source files to git server & commits changes
+###  #   ${1} = Production user name
+###  #*
+###  function copyProdToGit(){
+###    blueTxt "Pulling in changes from master to temp repo on git server..."
+###    ssh -Tq ${GITSRV}<<UPDTEMP
+###echo "ssh ${GITSRV} (Git Server)"
+###cd ${GITSRCTMP}
+###echo 'REPO: ${GITSRCTMP} COMMANDS: git pull'
+###git pull
+###cd ${GITBINTMP}
+###echo 'REPO: ${GITBINTMP} COMMANDS: git pull'
+###git pull
+###UPDTEMP
+###  
+###    blueTxt "Copying source files from production to git server..."
+###    boldTxt "Enter your production server password:"
+###    ssh -Tq ${1}@${PROIP}<<COPYSRC
+###echo "ssh ${1}@${PROIP} (Production Server)"
+###echo "${PROSRC} ---> ${GITSRV}:${GITSRCTMP}"
+###rsync -t ${PROSRC}*.{TXT,VRB,PRG,IO,DEF,INC,PGM,VAR} ${GITSRV}:${GITSRCTMP}
+###echo "${PROBIN} ---> ${GITSRV}:${GITBINTMP}"
+###rsync -t ${PROBIN}*.sh ${GITSRV}:${GITBINTMP}
+###COPYSRC
+###
+###    blueTxt "Committing changes to temp repo and pushing to master repo on git server..."
+###    ssh -Tq ${GITSRV}<<UPDGIT
+###echo "ssh ${GITSRV} (Git Server)"
+###cd ${GITSRCTMP}
+###echo 'REPO: ${GITSRCTMP} COMMANDS: git add && git commit && git push'
+###git add .
+###git commit -m "pro-to-git $(date +"%m-%d-%y %I:%M:%S %p")"
+###git push
+###cd ${GITBINTMP}
+###echo "REPO: ${GITBINTMP} COMMANDS: git add && git commit && git push"
+###git add .
+###git commit -m "pro-to-git $(date +"%m-%d-%y %I:%M:%S %p")"
+###git push
+###UPDGIT
+###  }
+###  
+###  #get production user name
+###  local sshUser=""
+###  sshUser=$(getProductionUser "$curUser")
+###  if [ "${sshUser}" == "" ]; then
+###    redTxt "User ${curUser} is not setup to use this function. (gitFunctions)"
+###    cd "${curdir}"
+###    return
+###  fi
+###
+###  #TODO rethink this... probably ssh into prod first, then do all this stuff so we are only entering the password once
+###  #ssh into production and copy files to git server 
+###  copyProdToGit "${sshUser}"      #update git server
+###  local err=$?                    #save error codes if any
+###  unset -f copyProdToGit          #destroy local function after use
+###  if [ ${err} -gt ${GENERRS} ];then 
+###    echo "Error ${err} - SSH connection or remote command failed."  
+###    cd "${curdir}"
+###    return
+###  fi
+###  grnTxt "Git server updated OK!"
+###  
+###  #check for passed in repo directory
+###  if [[ -d "${repoPath}" ]];then
+###    cd "${repoPath}"
+###    blueTxt "${repoPath} - On branch $(git branch | grep \* | awk '{print $2}')"
+###  fi
+###
+###  #execute any passed in git commands
+###  if [ $# -gt 0 ]; then 
+###    case "${gitCmd}" in
+###      '-pull')
+###          boldTxt "Executing: git pull"
+###          git pull
+###          ;;
+###      '-fetch')
+###          boldTxt "Executing: git fetch"
+###          git fetch
+###          ;;
+###      '-push')
+###          boldTxt "Executing: git push"
+###          git push
+###          blueTxt "Pulling in changes from master to temp repo on git server..."
+###          ssh -Tq ${GITSRV}<<UPDTEMP
+###echo "ssh ${GITSRV} (Git Server)"
+###cd ${GITSRCTMP}
+###echo 'REPO: ${GITSRCTMP} COMMANDS: git pull'
+###git pull
+###cd ${GITBINTMP}
+###echo 'REPO: ${GITBINTMP} COMMANDS: git pull'
+###git pull
+###UPDTEMP
+###          ;;
+###    esac
+###  fi
+###  
+###  cd "${curdir}"                                            #back to previous directory
+###  grnTxt 'Bye!'
+###} 
