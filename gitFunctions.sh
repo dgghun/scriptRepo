@@ -7,6 +7,16 @@
 #                 
 # 
 ################################################################################
+function gittestcpsrc(){
+  ssh -Tq dgarcia@$XPROIP "
+    cp /dbc/src/*.{TXT,VRB,PRG,IO,DEF,INC,PGM,VAR} ~/gitTestDir -fp
+    cd ~/gitTestDir
+    git add .
+    git commit -m 'Production test update'
+    git push
+    "
+}
+
 #@  gitFunctionsHelp()
 #@  Prints this help screen :)
 #@
@@ -115,18 +125,56 @@ function gitlogtime(){
 #@  ${2} = Optional. Path to repo (ie /dbc/src)
 #@  
 function gitcommitall(){
-  if [ $# -gt 1 ]; then
-    local curdir=`pwd`
-    cd "$2"
-    if [ $? -gt 0 ]; then
-      cd "${curdir}"
-      return
-    fi
-    git add . ; git commit -m "${1}"
-    cd "${curdir}"
-  else
-    git add . ; git commit -m "${1}"
+  #local variables
+  local curdir=`pwd`
+  local dirToGo=""
+  local commitMsg="${1}"
+  
+  #check for short hand
+  case "${2}" in
+    "src")
+      dirToGo="/dbc/src/"
+      ;;
+    "bin")
+      dirToGo="/dbc/bin/"
+      ;;
+    *)
+      dirToGo="${2}"
+      ;;
+  esac
+  
+  
+  #check message size
+  if [ ${#commitMsg} -gt 50 ]; then 
+    redTxt "Commit message is too long. 50 characters max."
+    return 1
+  elif [ ${#commitMsg} -lt 4 ]; then 
+    redTxt "Commit message is too short."
+    return 1
   fi
+
+  #check if need to change directories
+  if [ $# -gt 1 ];then
+    if [ ! -d "${dirToGo}" ];then
+      redTxt "Directory does not exist"
+      return 1
+    fi
+    cd ${dirToGo}
+  fi
+  
+  #add changes to local index
+  blueTxt "Executing 'git add .' in "${dirToGo}""
+  git add .  
+  if [ $? -gt 0 ];then
+    cd "${curdir}"
+    return 1
+  fi
+  
+  #commit changes to local index
+  blueTxt "Executing 'git commit -m' in "${dirToGo}""
+  git commit -m "${1}"
+  
+  cd "${curdir}"
 }
 
 #@  gitchkmaster() [PATH]
@@ -320,22 +368,58 @@ function gitcopyToProd(){
 function gitstartdev(){
   #local variables
   local curdir=`pwd`
-  local dirToGo="${1}"
+  local dirToGo=""
   
   #check for short hand
-  case "${dirToGo}" in
+  case "${1}" in
     "src")
       dirToGo="/dbc/src/"
       ;;
     "bin")
       dirToGo="/dbc/bin/"
       ;;
+    *)
+      dirToGo="${1}"
+      ;;
   esac
+  
+  #check if need to change directories
+  if [ $# -gt 0 ];then
+    if [ ! -d "${dirToGo}" ];then
+      redTxt "Directory does not exist"
+      return 1
+    fi
+    cd ${dirToGo}
+  fi
+  
+  git checkout master     #start on master branch
+  if [ $? -gt 0 ];then
+    cd "${curdir}"
+    return 1
+  fi
+  
+  #pull in production changes
+  blueTxt "Executing 'git pull' in "${dirToGo}""
+  boldTxt "Enter production server password:"
+  git pull
+  if [ $? -gt 0 ];then
+    cd "${curdir}"
+    return 1
+  fi
+  
+  #create new develop
+  blueTxt "Executing 'git checkout -B develop' in "${dirToGo}""
+  git checkout -B develop
+  
+  cd "${curdir}"
+}
 
-  #if [ $# -gt 0 ];then
-  #  #TODO cd 
-  #fi
-
+#@ gitmergedevelop
+#@
+#@
+#@
+function gitmergedevelop(){
+  
 }
 
 #@  cdsrc()
