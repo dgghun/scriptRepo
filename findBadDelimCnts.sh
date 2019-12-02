@@ -27,7 +27,7 @@ fi
 DELIM="${DELIM:1:1}"  #remove '-' character
 recs=(`cat $INFILE | cut -b 1-2 | sort | uniq`)
 toChk=()    #bad records
-toChkCnt=() #bad records delimiter counts, ascending order
+toChkMax=() #bad records max delimiter
 
 echo 'REC     CNT'
 echo '-------|----------'
@@ -35,19 +35,26 @@ for i in ${recs[*]}; do
   cnt=(`grep ^$i $INFILE | awk -F "${DELIM}" '{print NF}' | sort | uniq`)
   if [ ${#cnt[*]} -gt 1 ];then
     tput setaf 1
-    toChk+=($i)
+    echo $i
+    toChk+=("${i}")
+    toChkMax+=(${cnt[0]}) #set max delimiter
   fi
   printf "REC $i |"
   echo  "${cnt[*]}"
   tput sgr0
 done
 
-if [ ${#toChk} -gt 0 ]; then
+rm ./findBadDelimCnts.tmp -f &> /dev/null
+if [ ${#toChk[*]} -gt 0 ]; then
   tput setaf 3
   echo "Recs to check: ${toChk[*]}"
   tput sgr0
   
-  
+  max=$((${#toChk[*]} - 1))
+  for i in `seq 0 ${max}`; do
+    echo "REC:${toChk[$i]} MAX:${toChkMax[$i]}"
+    grep ^"${toChk[$i]}" "${INFILE}" | awk -F "${DELIM}" -v x="${toChkMax[$i]}" '{if(NF > x) print }'
+  done >> ./findBadDelimCnts.tmp
 fi
 
 
