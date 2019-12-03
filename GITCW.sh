@@ -1,10 +1,10 @@
 #!/bin/bash
 ################################################################################
-# SCRIPT NAME:    GITCW.sh
+# SCRIPT NAME:    GITCW.sh on PRODUCTION SERVER ONLY
 # BY:             David Garcia
 # DATE:           
 # DESCRIPTION:    Compiles a DBC program. Used in the git process on the 
-#                 production server. Adapted form the CW script.
+#                 PRODUCTION SERVER. Adapted form the CW script.
 # 
 ################################################################################
 # FUNCTIONS
@@ -30,22 +30,39 @@ function gitcwOptionCheck(){
   esac
 }
 
+# gitcwCopyToProChk()
+# Checks if the copy-to-production option is set. If so, copies file from test
+# to production.
+function gitcwCopyToProChk(){
+  case "${OPT}" in 
+  "-"*[c]*) 
+    tput setaf 6  #color cyan
+    echo "Copying ${PRG} from test system to production..."
+    scp ${MYIP}:/dbc/work/$PRG.{TXT,$ME} /dbc/work/ 2> /dev/null
+    tput sgr0     #color off
+    OPT="${OPT//c/}"  #remove all 'c' options
+    ;;
+  esac
+}
+
 # VARIABLES
 cmpErr=0    #compile errors
 INITIALS=(DAV GLE AJS MAG BG DGG)
-PRG=$1
-OPT="$2"              #option
-if [ "$2" ] && [ "${2:0:1}" != "-" ]; then  #has 2nd argument and not an option
-  DIR="/$2"
+MYIP=$1
+PRG=$2
+OPT="$3"              #option
+if [ "$3" ] && [ "${3:0:1}" != "-" ]; then  #has 3rd argument and its not an option
+  DIR="/$3"
 else
   DIR=""
 fi
 
-if [ $# -eq 0 -o $# -gt 2 ] ; then   ### bad params
+if [ $# -eq 0 -o $# -gt 3 ] ; then   ### bad params
   echo -e "\nCompile DB/C program."
   echo -e "\nUsage: GITCW <PROGRAM>\n"
 else
   if [ -e /dbc/work/$PRG.$ME ]; then
+    gitcwCopyToProChk   #copy option check
     cmpErr=`dbcmp /dbc/work/$PRG.$ME ~/$PRG -z -i | grep "ERROR" -c`
     if [ -e ~/$PRG.DBG ] ; then
       mv -f ~/$PRG.DBG /dbc/prgd/

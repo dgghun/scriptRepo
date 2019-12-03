@@ -1,10 +1,10 @@
 #!/bin/bash
 ################################################################################
-# SCRIPT NAME:    GITPP.sh
+# SCRIPT NAME:    GITPP.sh on PRODUCTION SERVER ONLY
 # BY:             David Garcia
 # DATE:           
 # DESCRIPTION:    Puts a DBC compiled program into production. Used in the git 
-#                 process on the production server. Adapted form the PP script.
+#                 process on the PRODUCTION SERVER. Adapted form the PP script.
 # 
 ################################################################################
 # VARIABLES

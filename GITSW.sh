@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# SCRIPT NAME:    GITSW.sh
+# SCRIPT NAME:    GITSW.sh on PRODUCTION SERVER ONLY
 # BY:             David Garcia
 # DATE:           
 # DESCRIPTION:    Moves source files from "/dbc/src" or "/dbc/bin" to /dbc/work.
@@ -12,8 +12,13 @@
 function gitswOptionCheck(){
   case  "${OPT}" in
     "-u") #unlock file (ie remove it from work)
-      tput setaf 2  #color green
-      rm -fv ${fileCheck}
+      if [ "${fileCheck}" == "" ]; then
+        tput setaf 1  #color red
+        echo "You don't have this file checked out"
+      else
+        tput setaf 2  #color green
+        rm -fv ${fileCheck}
+      fi
       tput sgr0     #color off
       exit 0
   esac
@@ -60,6 +65,8 @@ else ### parameters ok
         exit 1
       fi
     done
+    
+    gitswOptionCheck  #check if unlocking a file that you dont have
     
     fileToCopy=''
     fileToCopy=$(ls /dbc/{bin,src}${DIR}/${PRG}.{TXT,sh} 2> /dev/null)  #get file name
