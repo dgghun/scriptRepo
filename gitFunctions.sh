@@ -48,18 +48,21 @@ function gitFunctionsHelp(){
 #@  ${2} = Optional. Path to repo (ie /dbc/src)
 #@
 function gitshow(){
+  #local variables
+  local dirToGo=$(shorthand "${2}")   #check for short hand path
+  local curdir=`pwd`
+  
   if [ $# -gt 1 ]; then
-    local curdir=`pwd`
-    cd "$2"
+    cd "${dirToGo}"
     if [ $? -gt 0 ]; then
       cd "${curdir}"
       return
     fi
-    git show --color --pretty=format:%b "${1}"
-    cd "${curdir}"
-  else
-    git show --color --pretty=format:%b "${1}"
+    echo "${dirToGo}"
   fi
+  
+  git show --color --pretty=format:%b "${1}"
+  cd "${curdir}"
 }
 
 #@  gitstat() [PATH]
@@ -67,37 +70,44 @@ function gitshow(){
 #@  ${1} = Optional. Path to repo (ie /dbc/src)
 #@
 function gitstat(){
-   if [ $# -gt 0 ]; then
-    local curdir=`pwd`
-    cd "$1"
-    if [ $? -gt 0 ]; then
-      cd "${curdir}"
-      return
-    fi
-    git status
-    cd "${curdir}"
-   else
-    git status
+  #local variables
+  local dirToGo=$(shorthand "${1}")   #check for short hand path
+  local curdir=`pwd`
+  
+  if [ $# -gt 0 ]; then
+   cd "${dirToGo}"
+   if [ $? -gt 0 ]; then
+     cd "${curdir}"
+     return
    fi
+   echo "${dirToGo}"
+  fi
+
+  git status
+  cd "${curdir}"
 }
+
 
 #@  gitlog() [PATH]
 #@  Prints the current repos git commit log
 #@  ${1} = Optional. Path to repo (ie /dbc/src)
 #@
 function gitlog(){
+  #local variables
+  local dirToGo=$(shorthand "${1}")   #check for short hand path
+  local curdir=`pwd`
+  
   if [ $# -gt 0 ]; then
-    local curdir=`pwd`
-    cd "$1"
+    cd "${dirToGo}"
     if [ $? -gt 0 ]; then
       cd "${curdir}"
       return
     fi
-    git log --graph --oneline --decorate --color
-    cd "${curdir}"
-  else
-    git log --graph --oneline --decorate --color
+    echo "${dirToGo}"
   fi 
+
+  git log --graph --oneline --decorate --color
+  cd "${curdir}"
 }
 
 #@  gitlogtime() [PATH]
@@ -105,18 +115,20 @@ function gitlog(){
 #@  ${1} = Optional. Path to repo (ie /dbc/src)
 #@
 function gitlogtime(){
+  #local variables
+  local dirToGo=$(shorthand "${1}")   #check for short hand path
+  local curdir=`pwd`
+  
   if [ $# -gt 0 ]; then
-    local curdir=`pwd`
-    cd "$1"
+    cd "${dirToGo}"
     if [ $? -gt 0 ]; then
       cd "${curdir}"
       return
     fi
-    git log --pretty=format:"%C(yellow)%h %Creset%an %C(green)%ar %CresetMSG:%C(cyan)'%s'" --graph
-    cd "${curdir}"
-  else
-    git log --pretty=format:"%C(yellow)%h %Creset%an %C(green)%ar %CresetMSG:%C(cyan)'%s'" --graph
   fi
+
+  git log --pretty=format:"%C(yellow)%h %Creset%an %C(green)%ar %CresetMSG:%C(cyan)'%s'" --graph
+  cd "${curdir}"
 }
 
 #@  gitcommitall() [MESSAGE] [PATH]
@@ -127,22 +139,8 @@ function gitlogtime(){
 function gitcommitall(){
   #local variables
   local curdir=`pwd`
-  local dirToGo=""
+  local dirToGo=$(shorthand "${2}")   #check for short hand path
   local commitMsg="${1}"
-  
-  #check for short hand
-  case "${2}" in
-    "src")
-      dirToGo="/dbc/src/"
-      ;;
-    "bin")
-      dirToGo="/dbc/bin/"
-      ;;
-    *)
-      dirToGo="${2}"
-      ;;
-  esac
-  
   
   #check message size
   if [ ${#commitMsg} -gt 50 ]; then 
@@ -182,18 +180,53 @@ function gitcommitall(){
 #@  ${1} = Optional. Directory path to git repo (ie /dbc/src).
 #@
 function gitchkoutmaster(){
+  #local variables
+  local dirToGo=$(shorthand "${1}")   #check for short hand path
+  local curdir=`pwd`
+  
   if [ $# -gt 0 ]; then
-    local curdir=`pwd`
-    cd "$1"
+    cd "${dirToGo}"
     if [ $? -gt 0 ]; then
       cd "${curdir}"
       return
     fi
-    git checkout master
-    cd "${curdir}"
-  else
-    git checkout master
+    echo "${dirToGo}"
   fi
+
+  git checkout master
+  cd "${curdir}"
+}
+
+#@  gitpush() [PATH]
+#@  Pushes changes to remote repo (ie production server)
+#@  ${1} = Optional. Directory path to git repo (ie /dbc/src).
+#@
+function gitpush(){
+   #local variables
+  local dirToGo=$(shorthand "${1}")   #check for short hand path
+  local curdir=`pwd`
+  
+  if [ $# -gt 0 ]; then
+    cd "${dirToGo}"
+    if [ $? -gt 0 ]; then
+      cd "${curdir}"
+      return
+    fi
+    echo "${dirToGo}"
+  fi
+
+  local curBranch=$(git branch --show-current 2> /dev/null)
+  if [ "${curBranch}" != "master" ]; then
+    redTxt "You are not on branch 'master' in `pwd`"
+    redTxt "Pushing from the 'master' branch is only allowed."
+    cd "${curdir}"
+    return 1
+  fi
+
+  blueTxt "Executing 'git push' in ${dirToGo}"
+  boldTxt "Enter production password:"
+  git push
+  cd "${curdir}"
 }
 
 #@  gitchkdevelop() [PATH]
@@ -201,18 +234,21 @@ function gitchkoutmaster(){
 #@  ${1} = Optional. Directory path to git repo (ie /dbc/src).
 #@
 function gitchkoutdevelop(){
+  #local variables
+  local dirToGo=$(shorthand "${1}")   #check for short hand path
+  local curdir=`pwd`
+
   if [ $# -gt 0 ]; then
-    local curdir=`pwd`
-    cd "$1"
+    cd "${dirToGo}"
     if [ $? -gt 0 ]; then
       cd "${curdir}"
       return
     fi
-    git checkout develop
-    cd "${curdir}"
-  else
-    git checkout develop
+    echo "${dirToGo}"
   fi
+
+  git checkout develop
+  cd "${curdir}"
 }
 
 #@  getProductionUser() [USER]
@@ -368,20 +404,7 @@ function gitcopyToProd(){
 function gitstartdev(){
   #local variables
   local curdir=`pwd`
-  local dirToGo=""
-  
-  #check for short hand
-  case "${1}" in
-    "src")
-      dirToGo="/dbc/src/"
-      ;;
-    "bin")
-      dirToGo="/dbc/bin/"
-      ;;
-    *)
-      dirToGo="${1}"
-      ;;
-  esac
+  local dirToGo=$(shorthand "${1}")   #check for short hand path
   
   #check if need to change directories
   if [ $# -gt 0 ];then
@@ -390,6 +413,7 @@ function gitstartdev(){
       return 1
     fi
     cd ${dirToGo}
+    pwd
   fi
   
   git checkout master     #start on master branch
@@ -414,12 +438,112 @@ function gitstartdev(){
   cd "${curdir}"
 }
 
-#@ gitmergedevelop
+#@  gitmergedevelop
+#@  Executes a "git fetch" and "git rebase" from the development branch into 
+#@  the master branch (ie merges develop into master). 
+#@  ${1} = Optional path to a repo. Short hand dbc directories are "src" and "bin"
 #@
-#@
+#@  Examples: 
+#@  gitmergedevelop src
+#@  gitmergedevelop bin
+#@  gitmergedevelop /some/path/
 #@
 function gitmergedevelop(){
+  #local variables
+  local curdir=`pwd`
+  local dirToGo=$(shorthand "${1}")   #check for short hand path
   
+  #check if need to change directories
+  if [ $# -gt 0 ];then
+    if [ ! -d "${dirToGo}" ];then
+      redTxt "Directory does not exist"
+      return 1
+    fi
+    cd ${dirToGo}
+    pwd
+  fi
+  
+  #check if on develop
+  local curBranch=""
+  curBranch=$(git branch --show-current 2> /dev/null)
+  if [ "${curBranch}" != "develop" ]; then
+    redTxt "You are not on branch 'develop' in `pwd`"
+    cd "${curdir}"
+    return 1
+  fi
+  
+  #fetch new changes
+  blueTxt "Executing 'git fetch' in "${dirToGo}""
+  boldTxt "Enter production password:"
+  git fetch
+  if [ $? -gt 0 ];then
+    redTxt "Merge function failed."
+    yelTxt "Remaining commands:"
+    yelTxt "---> git fetch"
+    yelTxt "---> git rebase origin/master"
+    yelTxt "---> git checkout master"
+    yelTxt "---> git pull"
+    yelTxt "---> git merge develop"
+    cd "${curdir}"
+    return 1
+  fi
+  
+  #do rebase style merge
+  blueTxt "Executing 'git rebase origin/master' in "${dirToGo}""
+  git rebase origin/master
+  if [ $? -gt 0 ];then
+    redTxt "Merge function failed."
+    yelTxt "Remaining commands:"
+    yelTxt "---> git rebase origin/master"
+    yelTxt "---> git checkout master"
+    yelTxt "---> git pull"
+    yelTxt "---> git merge develop"
+    cd "${curdir}"
+    return 1
+  fi
+  
+  #check out master
+  git checkout master
+  if [ $? -gt 0 ];then
+    git status
+    redTxt "Merge function failed."
+    yelTxt "Remaining commands:"
+    yelTxt "---> git checkout master"
+    yelTxt "---> git pull"
+    yelTxt "---> git merge develop"
+    cd "${curdir}"
+    return 1
+  fi
+  
+  #pull in new changes
+  blueTxt "Executing 'git pull' in "${dirToGo}""
+  boldTxt "Enter production password:"
+  git pull
+  if [ $? -gt 0 ];then
+    git status
+    redTxt "Merge function failed."
+    yelTxt "Remaining commands:"
+    yelTxt "---> git pull"
+    yelTxt "---> git merge develop"
+    cd "${curdir}"
+    return 1
+  fi
+  
+  #do rebase style merge
+  blueTxt "Executing 'git merge develop' in "${dirToGo}""
+  git merge develop
+  if [ $? -gt 0 ];then
+    git status
+    redTxt "Merge function failed."
+    yelTxt "Remaining commands:"
+    yelTxt "---> git merge develop"
+    cd "${curdir}"
+    return 1
+  fi
+  
+  git status
+  grnTxt "Merge SUCCESSFUL!"
+  cd "${curdir}"
 }
 
 #@  cdsrc()
@@ -476,6 +600,31 @@ function blueTxt(){
 function redTxt(){
   local RED=1
   tput setaf ${RED}; echo "${1}"; tput sgr0;
+}
+
+#@  yelTxt() [STRING]
+#@  Prints the string as yellow font
+#@  ${1} = Some string
+#@ 
+function yelTxt(){
+  local YEL=3
+  tput setaf ${YEL}; echo "${1}"; tput sgr0;
+}
+
+#local function that checks for path short hand options
+#add additional ones here
+function shorthand(){
+  case "${1}" in
+    "src")
+      echo "/dbc/src/"
+      ;;
+    "bin")
+      echo "/dbc/bin/"
+      ;;
+    *)
+      echo "${1}"
+      ;;
+  esac
 }
 
 #*******************************************************************************
