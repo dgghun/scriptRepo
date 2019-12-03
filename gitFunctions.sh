@@ -9,8 +9,18 @@
 ################################################################################
 function gittestcpsrc(){
   ssh -Tq dgarcia@$XPROIP "
-    cp /dbc/src/*.{TXT,VRB,PRG,IO,DEF,INC,PGM,VAR} ~/gitTestDir -fp
     cd ~/gitTestDir
+    pwd
+    git pull
+    cp /dbc/src/*.{TXT,VRB,PRG,IO,DEF,INC,PGM,VAR} ./ -fp
+    git add .
+    git commit -m 'Production test update'
+    git push
+    
+    cd ~/gitTestDirBin/bin
+    pwd
+    git pull
+    cp /dbc/bin/*.sh ./ -fp
     git add .
     git commit -m 'Production test update'
     git push
@@ -544,6 +554,77 @@ function gitmergedevelop(){
   git status
   grnTxt "Merge SUCCESSFUL!"
   cd "${curdir}"
+}
+
+#@  gitsw()
+#@  Copies a program from /dbc/src to /dbc/work OR a script from /dbc/bin to 
+#@  your home directory. Adapted from the SW script.
+#@  ${1} = Program or script name, no extension. 
+#@
+#@  Examples: 
+#@  gitsw someScript
+#@  gitsw SOMEPROGRAM
+#@  
+
+function gitsw(){
+  local PRG="${1}"
+  
+  if [ "${PRG}" == "" ];then
+    redTxt "No program or script name entered. 'gitsw fileName'"
+    return 1
+  fi
+
+  if [ -f /dbc/src/${PRG}.TXT ] || [ -f /dbc/bin/${PRG}.sh ] ; then
+    fileToCopy=''
+    fileToCopy=$(ls /dbc/{bin,src}/${PRG}.{TXT,sh} 2> /dev/null)  #get file name
+    tput setaf 2    #green color
+    if $(echo ${fileToCopy} | grep -q "\.sh"$); then
+        echo "Copying script..."
+        cp -v ${fileToCopy} ~/${fileToCopy##*/}
+    else
+      reformat /dbc/src/${PRG}.TXT /dbc/work/${PRG}.$ME -t -!
+    fi
+    tput sgr0;    #color off
+  else  ### source doesn't exist
+    tput setaf 1  #red color
+      echo "Program ${PRG}.TXT and ${PRG}.sh do NOT exist !"
+    tput sgr0     #color off
+  fi
+}
+
+#@  gitws()
+#@  Copies a program from /dbc/work to /dbc/src OR a script from your home 
+#@  directory to /dbc/bin. Adapted from the WS script.
+#@  ${1} = Program or script name, no extension. 
+#@
+#@  Examples: 
+#@  gitws someScript
+#@  gitws SOMEPROGRAM
+#@
+function gitws(){
+  local PRG="${1}"
+  
+  if [ "${PRG}" == "" ];then
+    redTxt "No program or script name entered. 'gitsw fileName'"
+    return 1
+  fi
+  
+  if [ -f /dbc/work/${PRG}.${ME} ] || [ -f ~/${PRG}.sh ] ; then
+    fileToCopy=''
+    fileToCopy=$(ls ~/${PRG}.{TXT,sh} 2> /dev/null)  #get file name
+    tput setaf 2    #green color
+    if $(echo ${fileToCopy} | grep -q "\.sh"$); then
+        echo "Copying script back to source..."
+        cp -v ${fileToCopy} /dbc/bin
+    else
+      reformat /dbc/work/${PRG}.$ME /dbc/src/${PRG}.TXT -t -!
+    fi
+    tput sgr0;    #color off
+  else  ### source doesn't exist
+    tput setaf 1  #red color
+      echo "Program ${PRG}.TXT and ${PRG}.sh do NOT exist !"
+    tput sgr0     #color off
+  fi
 }
 
 #@  cdsrc()
