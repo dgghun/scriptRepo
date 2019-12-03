@@ -44,6 +44,9 @@ function stopTime(){
 # re-index()
 # index files again that usually have issues
 function re_index(){
+  source /dbc/bin/functions.sh  #dbc functions
+  PMS 
+  
   tput setaf 6
   echo -e "\nRe-indexing files with known issues:"
   tput sgr0
