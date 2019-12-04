@@ -8,6 +8,7 @@
 # 
 ################################################################################
 function gittestcpsrc(){
+  #for testing. Updates mock production system repo
   ssh -Tq dgarcia@$XPROIP "
     cd ~/gitTestDir
     pwd
@@ -106,6 +107,8 @@ function gitlog(){
   #local variables
   local dirToGo=$(shorthand "${1}")   #check for short hand path
   local curdir=`pwd`
+  local dateFormat='%m-%d-%y %I:%M:%S %p'
+  local logFormat='%C(yellow)%h %C(cyan)%an%x09 %Creset%C(bold)%ad%Creset%C(auto)%d %s'
   
   if [ $# -gt 0 ]; then
     cd "${dirToGo}"
@@ -116,28 +119,44 @@ function gitlog(){
     echo "${dirToGo}"
   fi 
 
-  git log --graph --oneline --decorate --color
+  git log --decorate --all --full-history --date-order --date=format:"${dateFormat}" --pretty=format:"${logFormat}"
   cd "${curdir}"
 }
 
-#@  gitlogtime() [PATH]
+#@  gitlogsearch() [FILENAME] [PATH]
 #@  Prints the current repos git commit log
-#@  ${1} = Optional. Path to repo (ie /dbc/src)
+#@  ${1} = File to search for in git commit history
+#@  ${2} = Optional. Path to repo (ie /dbc/src)
 #@
-function gitlogtime(){
+function gitlogsearch(){
   #local variables
-  local dirToGo=$(shorthand "${1}")   #check for short hand path
   local curdir=`pwd`
+  local dateFormat='%m-%d-%y %I:%M:%S %p'
+  local logFormat='%C(yellow)%h %C(cyan)%an%x09 %Creset%C(bold)%ad%Creset%C(auto)%d %s'
   
-  if [ $# -gt 0 ]; then
+  if [ "${1}" == "" ];then
+    redTxt "No file name entered"
+    return 1
+  else
+    local fileToFind=" -- ${1}"
+  fi
+  
+  if [ $# -gt 1 ]; then
+    local dirToGo=$(shorthand "${2}")   #check for short hand path
     cd "${dirToGo}"
     if [ $? -gt 0 ]; then
       cd "${curdir}"
       return
     fi
-  fi
+    echo "${dirToGo}"
+  fi 
 
-  git log --pretty=format:"%C(yellow)%h %Creset%an %C(green)%ar %CresetMSG:%C(cyan)'%s'" --graph
+  result=`git log --decorate --all --full-history --date-order --date=format:"${dateFormat}" --pretty=format:"${logFormat}" ${fileToFind}`
+  if [ ${#result} -gt 0 ];then
+    git log --decorate --all --full-history --date-order --date=format:"${dateFormat}" --pretty=format:"${logFormat}" ${fileToFind}
+  else
+    echo "Could not find ${1} in history"
+  fi
   cd "${curdir}"
 }
 
@@ -448,7 +467,7 @@ function gitstartdev(){
   cd "${curdir}"
 }
 
-#@  gitmergedevelop
+#@  gitmergedevelop() [PATH]
 #@  Executes a "git fetch" and "git rebase" from the development branch into 
 #@  the master branch (ie merges develop into master). 
 #@  ${1} = Optional path to a repo. Short hand dbc directories are "src" and "bin"
@@ -556,7 +575,7 @@ function gitmergedevelop(){
   cd "${curdir}"
 }
 
-#@  gitsw()
+#@  gitsw() [FILENAME]
 #@  Copies a program from /dbc/src to /dbc/work OR a script from /dbc/bin to 
 #@  your home directory. Adapted from the SW script.
 #@  ${1} = Program or script name, no extension. 
@@ -592,7 +611,7 @@ function gitsw(){
   fi
 }
 
-#@  gitws()
+#@  gitws() [FILENAME]
 #@  Copies a program from /dbc/work to /dbc/src OR a script from your home 
 #@  directory to /dbc/bin. Adapted from the WS script.
 #@  ${1} = Program or script name, no extension. 
