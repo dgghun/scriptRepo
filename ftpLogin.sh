@@ -11,8 +11,8 @@
 source ~/colorFunctions.sh
 
 
-FTPOLD="${XFTPOLD}"
-FTPNEW="${XFTPNEW}"
+FTPOLD="root@${XFTPOLD}"
+FTPNEW="root@${XFTPNEW}"
 
 while true; do
   read -p "SSH into (1)`GRNL Old-FTP` or (2)`PURPL New-FTP`?: " input
