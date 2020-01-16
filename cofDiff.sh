@@ -84,7 +84,15 @@ if [ ${diffCnt} -gt 0 ]; then
                 done
                 echo "Done!"
                 break;;
-        * )     echo "Ok, no changes made."; 
+        * )     echo "Ok, no changes made.";
+                cnt=0
+                for i in `seq 0 $((${#fileArray[*]}-1))`;do
+                  tmp=${fileArray[$i]}
+                  tmp=${tmp:3}
+                  end=$((${#tmp} - 4))
+                  echo "${tmp:0:${end}}"
+                done | sort |uniq | tr '\n' ' '
+                echo ""
                 break;;
     esac
   done
