@@ -45,5 +45,9 @@ ls -lhRA |
         else 
           print $0
        }'
-
+totalFiles=`find ./ -type f | wc -l`
+totalSize=`du -sh ./ | awk '{print $1}'`
+echo ""
+echo "TOTAL FILES: $totalFiles"
+echo "TOTAL SIZE: $totalSize"
 
