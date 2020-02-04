@@ -3,7 +3,7 @@
 # SCRIPT NAME:    comp_chrm_prgs.sh
 # BY:             David Garcia
 # DATE:           4-29-19
-# DESCRIPTION:    Builds a list of programs that use COSPCHROMs read/write 
+# DESCRIPTION:    Builds a list of programs that use COSPCHRM/COSPCHRN read/write 
 #                 routines and compiles them.  
 #                 
 # 
@@ -19,14 +19,14 @@ FILE_PRGS="./PRGS.TXT"
 LOG="COMPILELOG.TXT"
 SCRIPT="PPforce.sh"
 
-rm -f ./${FILE_PRGS}* ./${LOG}* &> /dev/null                                      
+rm -f ./${FILE_PRGS}* ./${LOG}* &> /dev/null
 
 #BUILD THE LIST
-grep -i "READCHRM\|WRITCHRM" ${DBCSRC}* | grep -i "CALL" > ${FILE_PRGS}.TMP1  #read/write calls to COSPCHROM
-grep  -v "${DBCSRC}QD\|~\|CONT" ${FILE_PRGS}.TMP1 |       #no QD or note programs
+grep -i "READCHRM\|WRITCHRM\|READCHRN\|WRITCHRN" ${DBCSRC}* | grep -i "CALL" > ${FILE_PRGS}.TMP1  #read/write calls to COSPCHROM
+grep  -v "${DBCSRC}QD\|~\|CONT\|QND" ${FILE_PRGS}.TMP1 |       #no QD or note programs
   awk '{print substr($1, 1, match($1,":")-1)}' |          #print file path and name
   sort | uniq > ${FILE_PRGS}.TMP2                         #sort it and remove duplicates
-grep ".TXT" ${FILE_PRGS}.TMP2 > ${FILE_PRGS}              #only txt files
+grep "TXT"$ ${FILE_PRGS}.TMP2 > ${FILE_PRGS}              #only txt files
 
 #COMPILE THE LIST
 FILES=`sed 's/.TXT//g' ${FILE_PRGS}`                      #Save file names w/out extension
@@ -41,6 +41,6 @@ for i in ${FILES};do                                      #Loop through file nam
 done                                                      
 echo -e "Done\n\n"
 
-rm -f ./${LOG}.TMP ${FILE_PRGS}.TMP* &> /dev/null                                      
+rm -f ./${LOG}.TMP ${FILE_PRGS}.TMP*  &> /dev/null                                      
 sort -o ./${LOG} ./${LOG}                                 #sort it
 cat ./${LOG} -b                                           #show it
