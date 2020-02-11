@@ -26,6 +26,12 @@ function gittestcpsrc(){
     git commit -m 'Production test update'
     git push
     "
+   if [ "${1}" == "u" ]; then
+    curdir=`pwd`
+    cd /dbc/src; pwd; git pull;
+    cd /dbc/bin; pwd; git pull;
+    cd "${curdir}"
+   fi
 }
 
 #@  gitFunctionsHelp()
