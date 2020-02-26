@@ -25,16 +25,16 @@ FTPSYS="root@ftpserver:"
 #get source input
 while [ "$SYS_SRC" != "1" ] && [ "$SYS_SRC" != "2" ] && [ "$SYS_SRC" != "3" ] && [ "$SYS_SRC" != "4" ]; do
   echo -e "\n${GREEN}SOURCE${NC}"
-  read -p 'Source file system? 1=Live, 2=Test, 3=Local, 4=FTP: ' SYS_SRC
+  read -ep 'Source file system? 1=Live, 2=Test, 3=Local, 4=FTP: ' SYS_SRC
 done
-read -p 'Enter source file path:' SRC
+read -ep 'Enter source file path:' SRC 
 
 #get destination input
 while [ "$SYS_DEST" != "1" ] && [ "$SYS_DEST" != "2" ] && [ "$SYS_DEST" != "3" ] && [ "$SYS_DEST" != "4" ]; do
   echo -e "\n${RED}DESTINATION${NC}"
-  read -p 'Destination system? 1=Live, 2=Test, 3=Local, 4=FTP: ' SYS_DEST
+  read -ep 'Destination system? 1=Live, 2=Test, 3=Local, 4=FTP: ' SYS_DEST -r
 done
-read -p 'Enter destination file path:' DEST
+read -ep 'Enter destination file path:' DEST -r
 
 #set source path
 if [ "$SYS_SRC" = "1" ]; then
@@ -57,6 +57,6 @@ fi
 #display selection
 echo -e "\n${GREEN}Source${NC}: $SRC"
 echo -e "${RED}Destin${NC}: $DEST"
-read -p 'Press enter to copy' X
+read -ep 'Press enter to copy' X
 scp $SRC $DEST  #do copy
 echo 'Done! (getFile.sh)'
