@@ -28,8 +28,8 @@ function gittestcpsrc(){
     "
    if [ "${1}" == "u" ]; then
     curdir=`pwd`
-    cd /dbc/src; pwd; git pull;
-    cd /dbc/bin; pwd; git pull;
+    cd /dbc/src; pwd; git reset --hard origin/master;
+    cd /dbc/bin; pwd; git reset --hard origin/master;
     cd "${curdir}"
    fi
 }
