@@ -20,6 +20,9 @@ if [ "${1}" = "3"  ]; then
 elif [ "${1}" = "8" ]; then 
   CDB="8"
   ZDIR="/home/dgdev/ZCleanFiles8"
+elif [ "${1}" = "1" ]; then 
+  CDB="1"
+  ZDIR="/home/dgdev/ZCleanFiles"
 else 
   CYANL "Database not recognized. Defaulting to CDB1."
   CDB="1"
