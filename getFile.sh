@@ -32,9 +32,9 @@ read -ep 'Enter source file path:' SRC
 #get destination input
 while [ "$SYS_DEST" != "1" ] && [ "$SYS_DEST" != "2" ] && [ "$SYS_DEST" != "3" ] && [ "$SYS_DEST" != "4" ]; do
   echo -e "\n${RED}DESTINATION${NC}"
-  read -ep 'Destination system? 1=Live, 2=Test, 3=Local, 4=FTP: ' SYS_DEST -r
+  read -ep 'Destination system? 1=Live, 2=Test, 3=Local, 4=FTP: ' SYS_DEST
 done
-read -ep 'Enter destination file path:' DEST -r
+read -ep 'Enter destination file path:' DEST
 
 #set source path
 if [ "$SYS_SRC" = "1" ]; then
