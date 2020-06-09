@@ -31,10 +31,27 @@ fi
 fileList=${ZDIR}/ZDir${CDB}fileList.txt     #file list location and name
 ls ${ZDIR} > ${fileList}                    #make zdir file list 
 
+if [[ "${1}" == "t" ]];then
+  PURPL "Copying test files listed in ${fileList} to /home/testuser..."
+  for i in `cat ${fileList}`;do
+    ((COUNT++))
+    cp ~/${i} /home/testuser &>/dev/null
+    if [[ $? == 0 ]];then           #no errors
+      ((CPCNT++))
+    else 
+      echo -e ${RED}"-->"${NC}${i}" was ${RED}NOT${NC} copied!"
+    fi
+  done
+  PURPL "DONE!"
+  echo -e ${GREEN}${CPCNT} ${NC}"out of" ${GREEN}${COUNT} ${NC}"files where copied to" ${GREEN}$(pwd)${NC}
+  exit 0
+fi
+
 if [[ "${1}" == "d" ]] || [[ "${2}" == "d" ]];then 
   PURPL "Deleting CDB${CDB} files listed in ${fileList}..."
   for i in `cat ${fileList}`;do
     ((COUNT++))
+    rm /home/testuser/${i} -f &>/dev/null
     rm ~/${i} -f &>/dev/null
     if [[ $? == 0 ]];then           #no errors
       ((CPCNT++))
