@@ -83,6 +83,7 @@ rm -f ~/tempdir/* &> /dev/null  #clear it out
 cd ~/tempdir
 for dir in txt isi;do
   cntTotal=`ls ${NASPATH}/livefiles/cdb${cdb}/${dir}/* | wc -l`
+  cnt=0
   for i in ${NASPATH}/livefiles/cdb${cdb}/${dir}/*;do
     infile="${i##*/}"   #get file name
     ((cnt++))
