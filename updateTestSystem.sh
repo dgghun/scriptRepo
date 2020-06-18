@@ -6,6 +6,7 @@
 # DATE:           11/26/19
 # DESCRIPTION:    Updates test system files from the NAS back up.
 #                 
+# 6/17/20 dgg fixed "storage size error - not enough space". Process one file at a time.                 
 # 
 ################################################################################
 #VARIABLES......................................................................
@@ -16,6 +17,14 @@ FIN=''
 TSECS=''
 
 #FUNCTIONS......................................................................
+# trap CTRL + C and call ctrl_c()
+trap ctrl_c INT
+function ctrl_c() {
+  echo ""
+  echo "exiting"
+  tput cnorm
+  exit 1
+}
 
 # startTime()
 function startTime(){
@@ -70,45 +79,30 @@ fi
 
 startTime #start clock
 mkdir ~/tempdir   &> /dev/null  #make the directory in case its not there
+rm -f ~/tempdir/* &> /dev/null  #clear it out 
+cd ~/tempdir
 for dir in txt isi;do
-  rm -f ~/tempdir/* &> /dev/null  #clear it out 
-  
-  tput setaf 6  #cyan
-  echo "Copying remote CDB${cdb} ${dir^^} files to local temp directory..."
-  tput sgr0     #color off
-  rsync -ah --progress ${NASPATH}/livefiles/cdb${cdb}/${dir}/* ./tempdir/ 
-  echo "Done!"
-  chmod 666 ~/tempdir/* &> /dev/null
-
-  tput setaf 6  #cyan
-  echo "Moving ${dir^^} files to CDB${cdb} back folder..."
-  tput sgr0     #color off
-  cntTotal=`ls ~/tempdir/* | wc -l`
-  cnt=0
-  digits="${#cntTotal}"
-  tput civis #invisible cursor
-  for i in ~/tempdir/*; do
+  cntTotal=`ls ${NASPATH}/livefiles/cdb${cdb}/${dir}/* | wc -l`
+  for i in ${NASPATH}/livefiles/cdb${cdb}/${dir}/*;do
+    infile="${i##*/}"   #get file name
     ((cnt++))
-    printf "%0${digits}d " ${cnt} ;printf "of ${cntTotal} \r"
-    mv -f "${i}" /dbc/${dir}/cdb${cdb}_backup/ 1> /dev/null
-  done
-  printf "${cnt} of ${cntTotal} DONE!\n"
-  tput cnorm #reset cursor
-
-  tput setaf 6  #cyan
-  echo "Copying ${dir^^} files to CDB${cdb} folder..."
-  tput sgr0     #color off
-  cntTotal=`ls /dbc/${dir}/cdb${cdb}_backup/* | wc -l`
-  cnt=0
-  digits="${#cntTotal}"
-  tput civis #invisible cursor
-  for i in /dbc/${dir}/cdb${cdb}_backup/*; do
-    ((cnt++))
-    printf "%0${digits}d " ${cnt} ;printf "of ${cntTotal} \r"
-    cp -fp "${i}" /dbc/${dir}/cdb${cdb}/ 1> /dev/null
-  done
-  printf "${cnt} of ${cntTotal} DONE!\n"
-  tput cnorm #reset cursor
+    
+    tput setaf 6  #cyan
+    echo "PROCESSING ${i} : ${cnt} of ${cntTotal} (${dir} files)"
+    tput sgr0     #color off
+    
+    echo "Copying ${infile} to `pwd`..."
+    rsync -ah --progress "${i}" ./
+    chmod -v 666 ${infile} &> /dev/null
+    
+    echo "Moving ${infile} to CDB${cdb} ${dir^^} back folder..."
+    mv -f "${infile}" /dbc/${dir}/cdb${cdb}_backup/ 1> /dev/null
+    
+    echo "Copying ${infile} to CDB${cdb} ${dir^^} folder..."
+    cp -fp /dbc/${dir}/cdb${cdb}_backup/${infile} /dbc/${dir}/cdb${cdb}/ 1> /dev/null
+    
+    echo -e "${infile} DONE!\n"
+  done 
 done
 stopTime  #stop clock
 
