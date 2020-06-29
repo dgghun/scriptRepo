@@ -62,6 +62,12 @@ function re_index(){
   
   echo "ANSLOG"
   index ANSLOG -e
+  
+  echo "COFQUEU1 & COFQBTE1"
+  filechk COFQUEU1.TXT -f
+  i COFQBTE1 -e
+  i COFQUEU1 -e
+
 }
 
 # SCRIPT START..................................................................
