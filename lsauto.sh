@@ -9,7 +9,6 @@
 #
 # 
 ################################################################################
-source /dbc/bin/functions.sh
 #...............................................................................
 # FUNCTIONS
 #...............................................................................
@@ -78,9 +77,22 @@ if [[ "${CDB}"  == "" ]];then
   exit 1
 fi
 
+
+if [[ "${1}" == "" ]];then
+  recCnt="-e=500"
+elif [[ ${1} -gt 999 ]];then
+  echo "Max records allowed is 999"
+  exit 1
+elif echo ${1} | grep "^[[:digit:]]\{1,\}$" -q;then
+  recCnt="-e=${1}"
+else
+  echo "Option entered is not a number"
+  exit 1
+fi
+
 prevOpt=""
 prevPrgNum=0
-list AUTOLOG${CDB} -e=500 | while read -r line; do
+list AUTOLOG${CDB} "${recCnt}" | while read -r line; do
   opt=${line:0:2}
   prgNum=${line:2:2}
   sDate=`getDate ${line:4:8}`
