@@ -63,15 +63,16 @@ function re_index(){
   echo "ANSLOG"
   index ANSLOG -e
   
-  echo "COFQUEU1 & COFQBTE1"
-  filechk COFQUEU1.TXT -f
-  i COFQBTE1 -e
-  i COFQUEU1 -e
-
+  echo "COFQUEU${cdb} & COFQBTE${cdb}"
+  filechk COFQUEU${cdb}.TXT -f
+  i COFQBTE${cdb} -e
+  i COFQUEU${cdb} -e
+  cp -fpv /dbc/txt/cdb${cdb}/COFQUEU${cdb}.TXT /dbc/txt/cdb${cdb}_backup/ 
+  cp -fpv /dbc/isi/cdb${cdb}/COFQUEU${cdb}.ISI /dbc/isi/cdb${cdb}_backup/ 
 }
 
 # SCRIPT START..................................................................
-if [ "$cdb" = "" ];  then 
+if [ "$cdb" == "" ];  then 
   tput setaf 1  #red
   echo "No data base option (1,3,8) specified!"
   tput sgr0     #color off
