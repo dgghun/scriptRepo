@@ -31,13 +31,13 @@ ACRC_POS=${2}                     #combined action/result field position
 NOTE_POS=${3}                     #note field position
 INFILE="${4}"                     #file to process
 OUTFILE="${5}"                    #output file
-TMPFILE="NTAPPEND.${OUTFILE}"     #temp file
+TMPFILE=${OUTFILE}.NTAPPEND       #temp file
 #...............................................................................
 # FUNCTIONS
 #...............................................................................
 #function appends the notes
 function appendNotes(){
-  awk -v fieldSizes="${FIELDSIZES}" -v acrcPos=${ACRC_POS} -v notePos=${NOTE_POS} -v outfile="${1}" '
+  awk -v fieldSizes="${FIELDSIZES}" -v acrcPos=${ACRC_POS} -v notePos=${NOTE_POS} -v outfile=${1} -v ntCnt=${noteCnt} '
     function trim(str){
       gsub(/^[ ]+/,"",str)  #remove one or more (+) starting (^) spaces 
       gsub(/[ ]+$/,"",str)  #remove one or more (+) ending ($) spaces 
@@ -49,11 +49,12 @@ function appendNotes(){
       note=""
       longnote=""
       fullRec=""
+      printf "\r                                                               "
     }
     
     #Awk start
     {
-      printf "\rAppending notes "NR
+      printf "\rMESSAGES: Appending notes "NR
       actionResult=$acrcPos
       note=$notePos
       
@@ -80,7 +81,7 @@ function appendNotes(){
       else if(length(trim(fullRec)) > 0)  #have previous record?
         print fullRec >> outfile
       
-      printf "\rAppending notes done!                             \n"
+      printf "\rMESSAGES: Appending notes done!                              \n"
     }
     ' < ${INFILE} 
 }
@@ -88,7 +89,7 @@ function appendNotes(){
 # SCRIPT START
 #...............................................................................
 if [[ ${#5} -gt 0 ]];then               #output file passed in
-  rm -f ${TMPFILE} ${OUTFILE}           #purge old files
+  rm -f ${TMPFILE}                      #purge old files
   appendNotes ${TMPFILE}                #save to temp output file
   mv -f ${TMPFILE} ${OUTFILE}           #save to output file
 else
