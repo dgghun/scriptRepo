@@ -88,9 +88,12 @@ startTime #start clock
 mkdir ~/tempdir   &> /dev/null  #make the directory in case its not there
 rm -f ~/tempdir/* &> /dev/null  #clear it out 
 cd ~/tempdir
+
+sudo chmod 666 ${NASPATH}/livefiles/cdb${cdb}/{txt,isi}/*     #make sure you can copy
 for dir in txt isi;do
   cntTotal=`ls ${NASPATH}/livefiles/cdb${cdb}/${dir}/* | wc -l`
   cnt=0
+  
   for i in ${NASPATH}/livefiles/cdb${cdb}/${dir}/*;do
     infile="${i##*/}"   #get file name
     ((cnt++))
@@ -101,6 +104,7 @@ for dir in txt isi;do
     
     echo "Copying ${infile} to `pwd`..."
     rsync -ah --progress "${i}" ./
+    
     chmod -v 666 ${infile} &> /dev/null
     
     echo "Moving ${infile} to CDB${cdb} ${dir^^} back folder..."
