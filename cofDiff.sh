@@ -25,15 +25,15 @@ else
 fi
 
 
-du -a --time /dbc/isi/cdb${db}_backup/COF*.{AIM,ISI} | awk '{print $4,$2"_"$3}' | sort | awk '{print $2,$1}' >  ./${BACKUP}
-du -a --time /dbc/txt/cdb${db}_backup/COF*.TXT       | awk '{print $4,$2"_"$3}' | sort | awk '{print $2,$1}' >> ./${BACKUP}
+du -a --time /dbc/isi/cdb${db}_backup/{COF,PMS,TEAM}*.{AIM,ISI} 2>/dev/null | awk '{print $4,$2"_"$3}' | sort | awk '{print $2,$1}' >  ./${BACKUP}
+du -a --time /dbc/txt/cdb${db}_backup/{COF,PMS,TEAM}*.TXT       2>/dev/null | awk '{print $4,$2"_"$3}' | sort | awk '{print $2,$1}' >> ./${BACKUP}
 sed -i "s/\/dbc\/txt\/cdb${db}_backup\///g" ./${BACKUP} 
 sed -i "s/\/dbc\/isi\/cdb${db}_backup\///g" ./${BACKUP} 
 sort -o ./${BACKUP} ./${BACKUP}
 echo "$BACKUP = "$(wc -l ${BACKUP} | awk '{print $1}')" files."
 
-du -a --time /dbc/isi/cdb${db}/COF*{AIM,ISI} | awk '{print $4,$2"_"$3}' | sort | awk '{print $2,$1}' >  ./${CURRENT}
-du -a --time /dbc/txt/cdb${db}/COF*TXT       | awk '{print $4,$2"_"$3}' | sort | awk '{print $2,$1}' >> ./${CURRENT}
+du -a --time /dbc/isi/cdb${db}/{COF,PMS,TEAM}*{AIM,ISI} 2>/dev/null | awk '{print $4,$2"_"$3}' | sort | awk '{print $2,$1}' >  ./${CURRENT}
+du -a --time /dbc/txt/cdb${db}/{COF,PMS,TEAM}*TXT       2>/dev/null | awk '{print $4,$2"_"$3}' | sort | awk '{print $2,$1}' >> ./${CURRENT}
 sed -i "s/\/dbc\/txt\/cdb${db}\///g" ./${CURRENT} 
 sed -i "s/\/dbc\/isi\/cdb${db}\///g" ./${CURRENT} 
 sort -o ./${CURRENT} ./${CURRENT}
@@ -43,7 +43,7 @@ echo "Comparing files: $BACKUP $CURRENT"
 #diff ./${BACKUP} ./${CURRENT}
 diffCnt=0
 fileArray=()
-for i in `diff ./${BACKUP} ./${CURRENT} | grep "C" | awk '{print $3}' | sort | uniq`; do
+for i in `diff ./${BACKUP} ./${CURRENT} | grep "[<>]" | awk '{print $3}' | sort | uniq`; do
   echo $(YELL "Different: ")${i}
   ((diffCnt++))
   fileArray+=("${i}")
