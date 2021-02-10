@@ -15,12 +15,12 @@
 # $5=Output file
 #
 # EXAMPLES:
-# ntappend.sh '6 20 8 8 4 55' 5 6 MCRNOTES.SRT MCRNOTES.SRT #output to same file
-# ntappend.sh '6 20 8 8 4 55' 5 6 MCRNOTES.SRT OUTFILE.TXT  #output to different file
+# ntappend.sh '6 20 3 8 8 4 55' 6 7 MCRNOTES.SRT MCRNOTES.SRT #output to same file
+# ntappend.sh '6 20 3 8 8 4 55' 6 7 MCRNOTES.SRT OUTFILE.TXT  #output to different file
 #
 # REVISIONS:
 #
-#
+# sh ntappend.sh '6 20 3 8 8 4 55' 6 7 FIXNOT-OUT.TXT OUTFILE.TXT  #TESTING 
 ################################################################################
 #...............................................................................
 # VARIABLES
