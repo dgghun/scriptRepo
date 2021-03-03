@@ -65,7 +65,7 @@ function re_index(){
   
   echo "COFQUEU${cdb} & COFQBTE${cdb}"
   filechk COFQUEU${cdb}.TXT -f
-  i COFQUEU${cdb} COFQBTE${cdb} 21-30
+  i COFQUEU${cdb} COFQBTE${cdb} -e
   i COFQUEU${cdb} -e
   cp -fpv /dbc/txt/cdb${cdb}/COFQUEU${cdb}.TXT /dbc/txt/cdb${cdb}_backup/ 
   cp -fpv /dbc/isi/cdb${cdb}/COF{QUEU,QBTE}${cdb}.ISI /dbc/isi/cdb${cdb}_backup/ 
