@@ -29,7 +29,7 @@
 #*******************************************************************************
 inFile="${1}"                                 #file to fix
 MASK=${2}                                     #starting record mask
-tempFile=${FILE}.EDITED.TXT                 #temp work file
+tempFile="${inFile}".EDITED.TXT                 #temp work file
 cnt=0                                       #file position count
 oldFileCnt=0                                #old file position count
 previous=''                                 #stores previous read record
@@ -74,6 +74,7 @@ while IFS='' read -r line; do               #read the file
     echo "FIXED LINE: $cnt in NEW file, LINE: ${oldFileCnt} in OLD file"   
     continue
   else
+    line=`echo "${line}" | tr -d '\r' | tr -d '\n'`"\n" 
     echo "${line}" >> ${tempFile}                       #write good record
   fi
   previous="${line}"                                    #save as previous record
@@ -84,7 +85,7 @@ if [[ ${errFlag} == 1 ]];then                           #found bad records?
   mv -f ${tempFile} ${inFile}                           #yup, save updates
 else 
   echo "No records to fix"
-  rm -f ${tempFile}
+  #TESTING rm -f ${tempFile}
 fi
 echo "done. bye!"
 
