@@ -6,9 +6,12 @@
 # DATE:           11/26/19
 # DESCRIPTION:    Updates test system files from the NAS back up.
 #                 
-# 6/17/20 dgg fixed "storage size error - not enough space". Process one file at a time.                 
+# 05/12/21 dgg not copying over index files and just re-indexing 
+# 06/17/20 dgg fixed "storage size error - not enough space". Process one file at a time.                 
 # 
 ################################################################################
+source /dbc/bin/functions.sh
+source /dbc/bin/colorFunctions.sh
 #VARIABLES......................................................................
 cdb=$1
 NASPATH="/media/dbcextra"       #NAS mount point
@@ -53,9 +56,6 @@ function stopTime(){
 # re-index()
 # index files again that usually have issues
 function re_index(){
-  source /dbc/bin/functions.sh  #dbc functions
-  PMS 
-  
   tput setaf 6
   echo -e "\nRe-indexing files with known issues:"
   tput sgr0
@@ -84,12 +84,12 @@ elif [ "$cdb" != 8 ] && [ "$cdb" != 3 ] && [ "$cdb" != 1 ]; then
   exit 1
 fi
 
+PMS &> /dev/null
 startTime #start clock
 mkdir ~/tempdir   &> /dev/null  #make the directory in case its not there
 rm -f ~/tempdir/* &> /dev/null  #clear it out 
 cd ~/tempdir
 
-sudo chmod 666 ${NASPATH}/livefiles/cdb${cdb}/{txt,isi}/*     #make sure you can copy
 for dir in txt isi;do
   cntTotal=`ls ${NASPATH}/livefiles/cdb${cdb}/${dir}/* | wc -l`
   cnt=0
@@ -102,12 +102,26 @@ for dir in txt isi;do
     echo "PROCESSING ${i} : ${cnt} of ${cntTotal} (${dir} files)"
     tput sgr0     #color off
     
+    #index files, just re-index and copy to backup folder
+    if [[ "${dir}" == "isi" ]];then
+      indexSource=""
+      indexSource=`filechk $infile -i | grep "file is" -i | awk '{print $NF}'`
+      echo "Re-indexing ${infile} with source index file ${indexSource}"
+      /dbc/bin/index ${indexSource} ${infile} -e >/dev/null
+      
+      echo "Copying ${infile} to CDB${cdb} ${dir^^} back up folder..."
+      cp -fp /dbc/${dir}/cdb${cdb}/${infile} /dbc/${dir}/cdb${cdb}_backup/ 1> /dev/null
+      
+      echo -e "${infile} DONE!\n"
+      continue
+    fi
+
     echo "Copying ${infile} to `pwd`..."
     rsync -ah --progress "${i}" ./
     
     chmod -v 666 ${infile} &> /dev/null
     
-    echo "Moving ${infile} to CDB${cdb} ${dir^^} back folder..."
+    echo "Moving ${infile} to CDB${cdb} ${dir^^} back up folder..."
     mv -f "${infile}" /dbc/${dir}/cdb${cdb}_backup/ 1> /dev/null
     
     echo "Copying ${infile} to CDB${cdb} ${dir^^} folder..."
@@ -118,4 +132,4 @@ for dir in txt isi;do
 done
 stopTime  #stop clock
 
-re_index   #re-index files that have issues. 
+###re_index   #re-index files that have issues. 
