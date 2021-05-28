@@ -22,8 +22,10 @@ SCRIPT="PPforce.sh"
 rm -f ./${FILE_PRGS}* ./${LOG}* &> /dev/null
 
 #BUILD THE LIST
-grep -i "READCHRM\|WRITCHRM\|READCHRN\|WRITCHRN" ${DBCSRC}* | grep -i "CALL" > ${FILE_PRGS}.TMP1  #read/write calls to COSPCHROM
-grep  -v "${DBCSRC}QD\|~\|CONT\|QND" ${FILE_PRGS}.TMP1 |       #no QD or note programs
+#TESTINGgrep -i "READCHRM\|WRITCHRM\|READCHRN\|WRITCHRN" ${DBCSRC}* | grep -i "CALL" > ${FILE_PRGS}.TMP1  #read/write calls to COSPCHROM
+grep -i "CODFTEMP" ${DBCSRC}* | grep -i "INCLUDE" > ${FILE_PRGS}.TMP1  #TESTING for CODFTEMP
+#TESTINGgrep  -v "${DBCSRC}QD\|~\|CONT\|QND" ${FILE_PRGS}.TMP1 |       #no QD or note programs
+grep  -v "${DBCSRC}QD\|~\|QND" ${FILE_PRGS}.TMP1 |       #TESTING for CODFTEMP no QD 
   awk '{print substr($1, 1, match($1,":")-1)}' |          #print file path and name
   sort | uniq > ${FILE_PRGS}.TMP2                         #sort it and remove duplicates
 grep "TXT"$ ${FILE_PRGS}.TMP2 > ${FILE_PRGS}              #only txt files
