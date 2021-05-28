@@ -6,6 +6,7 @@
 # DATE:           11/26/19
 # DESCRIPTION:    Updates test system files from the NAS back up.
 #                 
+# 05/26/21 dgg include indexing of AIM indexes. Use proper db PMS,OUT,INS before starting.
 # 05/12/21 dgg not copying over index files and just re-indexing 
 # 06/17/20 dgg fixed "storage size error - not enough space". Process one file at a time.                 
 # 
@@ -84,7 +85,13 @@ elif [ "$cdb" != 8 ] && [ "$cdb" != 3 ] && [ "$cdb" != 1 ]; then
   exit 1
 fi
 
-PMS &> /dev/null
+#use proper db before starting
+case ${cdb} in
+  1) PMS;;
+  3) OUT;;
+  8) INS;;
+esac
+
 startTime #start clock
 mkdir ~/tempdir   &> /dev/null  #make the directory in case its not there
 rm -f ~/tempdir/* &> /dev/null  #clear it out 
@@ -105,9 +112,20 @@ for dir in txt isi;do
     #index files, just re-index and copy to backup folder
     if [[ "${dir}" == "isi" ]];then
       indexSource=""
-      indexSource=`filechk $infile -i | grep "file is" -i | awk '{print $NF}'`
+      opt=""
+      indexType=""
+
+      if [[ "${infile#*.}" == "AIM" ]];then
+        opt='-a'
+        indexType='aimdex'
+      else
+        opt='-i'
+        indexType='index'
+      fi
+
+      indexSource=`filechk $infile ${opt} | grep "file is" -i | awk '{print $NF}'`
       echo "Re-indexing ${infile} with source index file ${indexSource}"
-      /dbc/bin/index ${indexSource} ${infile} -e >/dev/null
+      /dbc/bin/${indexType} ${indexSource} ${infile} -e #>/dev/null
       
       echo "Copying ${infile} to CDB${cdb} ${dir^^} back up folder..."
       cp -fp /dbc/${dir}/cdb${cdb}/${infile} /dbc/${dir}/cdb${cdb}_backup/ 1> /dev/null
