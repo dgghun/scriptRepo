@@ -45,16 +45,28 @@ def ShowAllDefinitions(dbArray):
             print('Field Cnt:   ' + dbDefs['Def-Field_Count'])
             print('Fields:')
             fCnt = 0
-            print("#,\tName, \t\tType, \tSize, \tDescription")
+            print("#,\tName, \t\tType, \tSize, \tDescription, \t\tSQL-Data-Type")
             for field in dbDefs['Def-Field']:
                 fCnt += 1
                 fullName = str(field['Full-Name']).lower().replace(" ", "_")    #lower case & remove blanks
                 fullName = re.sub('^[0-9]\.[0-9][A-Za-z]_','',fullName)         #remove prepended version numbers
+                
+                sqlName = ''
+                if field['Field-Type'] == "DIM":
+                    sqlName = 'VARCHAR (' + field['Field-Size'] + ')'
+                elif field['Field-Type'] == "FORM" and field['Field-Size'] == '2.2':
+                    sqlName = 'DECIMAL (5,2)'
+                elif field['Field-Type'] == "FORM":
+                    sqlName = 'NUMERIC (12,2)'
+
+
+
                 print(str(fCnt) + ":\t," + 
                 field['Field-Name'] + "\t," + 
                 field['Field-Type'] + "\t," +
                 field['Field-Size'] + "\t," +
-                fullName
+                fullName + "\t\t," +
+                sqlName
                 )
 
 
