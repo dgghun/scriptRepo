@@ -6,7 +6,7 @@
 # DESCRIPTION:    Looks for file changes in cdb1, 3 or 8. If found, user is prompted
 #                 to reset them or not.
 #                 
-# 
+# 06/30/21 dgg using rsync to show progress 
 ################################################################################
 source ~/colorFunctions.sh
 
@@ -66,9 +66,11 @@ if [ ${diffCnt} -gt 0 ]; then
                 for i in `seq 0 $((diffCnt - 1))`; do
                   if [ "${doResetArray[$i]}" = "Y" ];then
                     if [ "${fileArray[$i]#*.}" = "TXT" ];then 
-                      cp -pv /dbc/txt/cdb${db}_backup/${fileArray[$i]} /dbc/txt/cdb${db}/
+                      ###cp -pv /dbc/txt/cdb${db}_backup/${fileArray[$i]} /dbc/txt/cdb${db}/
+                      rsync -ah --progress /dbc/txt/cdb${db}_backup/${fileArray[$i]} /dbc/txt/cdb${db}/
                     else
-                      cp -pv /dbc/isi/cdb${db}_backup/${fileArray[$i]} /dbc/isi/cdb${db}/
+                      ##cp -pv /dbc/isi/cdb${db}_backup/${fileArray[$i]} /dbc/isi/cdb${db}/
+                      rsync -ah --progress /dbc/isi/cdb${db}_backup/${fileArray[$i]} /dbc/isi/cdb${db}/
                     fi
                   fi
                 done
@@ -77,9 +79,11 @@ if [ ${diffCnt} -gt 0 ]; then
                 break;;
         [Aa]* ) for i in ${fileArray[*]}; do
                   if [ "${i#*.}" = "TXT" ];then 
-                    cp -pv /dbc/txt/cdb${db}_backup/${i} /dbc/txt/cdb${db}/
+                    ##cp -pv /dbc/txt/cdb${db}_backup/${i} /dbc/txt/cdb${db}/
+                    rsync -ah --progress /dbc/txt/cdb${db}_backup/${i} /dbc/txt/cdb${db}/
                   else
-                    cp -pv /dbc/isi/cdb${db}_backup/${i} /dbc/isi/cdb${db}/
+                    ##cp -pv /dbc/isi/cdb${db}_backup/${i} /dbc/isi/cdb${db}/
+                    rsync -ah --progress /dbc/isi/cdb${db}_backup/${i} /dbc/isi/cdb${db}/
                   fi
                 done
                 echo "Done!"
