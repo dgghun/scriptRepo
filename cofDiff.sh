@@ -8,7 +8,7 @@
 #                 
 # 06/30/21 dgg using rsync to show progress 
 ################################################################################
-source ~/colorFunctions.sh
+source /dbc/bin/colorFunctions.sh
 
 BACKUP="BACKUP.TXT"
 CURRENT="CURRENT.TXT"
