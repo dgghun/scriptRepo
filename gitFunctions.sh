@@ -21,7 +21,7 @@ function gittestcpsrc(){
     cd ~/gitTestDirBin/bin
     pwd
     git pull
-    cp /dbc/bin/*.sh ./ -fp
+    cp /dbc/bin/*.{sh,py} ./ -fp
     git add .
     git commit -m 'Production test update'
     git push
