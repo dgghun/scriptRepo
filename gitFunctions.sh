@@ -606,8 +606,10 @@ function gitsw(){
     if $(echo ${fileToCopy} | grep -q "\.sh"$); then
         echo "Copying script..."
         cp -v ${fileToCopy} ~/${fileToCopy##*/}
+        chmod 776 ~/${fileToCopy##*/}
     else
       reformat /dbc/src/${PRG}.TXT /dbc/work/${PRG}.$ME -t -!
+      chmod 776 /dbc/work/${PRG}.$ME
     fi
     tput sgr0;    #color off
   else  ### source doesn't exist
