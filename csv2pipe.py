@@ -41,7 +41,8 @@ if os.path.isfile(fileName) == False:
 tmpFile1 = fileName + '-' + PRGNAME + '1'
 if os.path.isfile(tmpFile1):
   os.remove(tmpFile1)
-reader = csv.reader(open(fileName,"rb"), delimiter=',')
+#1.0? reader = csv.reader(open(fileName,"rb"), delimiter=',')
+reader = csv.reader(open(fileName,"rt"), delimiter=',') #1.0?
 writer = csv.writer(open(tmpFile1,"w"), delimiter='|', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
 #write CSV file to temp file pipe delimited

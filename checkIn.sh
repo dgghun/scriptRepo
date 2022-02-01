@@ -8,6 +8,7 @@
 #
 ################################################################################
 source /dbc/bin/functions.sh
+source ~/.bashrc
 
 myhome="~/"
 mywork="/dbc/work/"
@@ -16,7 +17,9 @@ testip="${XTESTIP}"
 haveFile=0
 tmpFile='tmp.tmp'
 
+CYANL "Copying ${1} to production. Enter your password:"
 scp ${mywork}${1}.DGG dgarcia@${myip}:${mywork}
+CYANL "Logging into production. Enter your password:"
 ssh -t dgarcia@${myip} 
 
 
