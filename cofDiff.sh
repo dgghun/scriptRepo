@@ -6,6 +6,7 @@
 # DESCRIPTION:    Looks for file changes in cdb1, 3 or 8. If found, user is prompted
 #                 to reset them or not.
 #                 
+# 02/17/22 dgg added cdb2
 # 06/30/21 dgg using rsync to show progress 
 ################################################################################
 source /dbc/bin/colorFunctions.sh
@@ -13,7 +14,7 @@ source /dbc/bin/colorFunctions.sh
 BACKUP="BACKUP.TXT"
 CURRENT="CURRENT.TXT"
 
-if [ "${1}" == "1" ] || [ "${1}" == "3" ] || [ "${1}" == "8" ];then
+if [[ ${1} =~ [1238] ]];then
   db="${1}"
   CYANL "Processing CDB${db}..."
 elif [ "${1}" == "" ];then
